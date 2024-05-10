@@ -24,7 +24,7 @@ from pathlib import Path
 class Args:
     robot_port: int = 6001
     hostname: str = "127.0.0.1"
-    show_img: bool = True
+    show_img: bool = False
     save_data_path = str(Path(__file__).parent.parent.parent)+"/datasets/"
     project_name = "dataset1_cleanDish"
 
@@ -36,7 +36,7 @@ class Args:
 what_to_do = np.array(([0, 0, 0], [0, 0, 0]))
 dt_time = np.array([20240507161455])
 
-def button_monitor_realtime(agent, env):
+def button_monitor_realtime(agent):
     # servo
     last_keys_status = np.array(([0, 0], [0, 0]))
     start_press_status = np.array(([0, 0], [0, 0]))  # start press
@@ -77,12 +77,10 @@ def button_monitor_realtime(agent, env):
                             what_to_do[i, 1] = 1
                             log_write(__file__, "ButtonA: [" + str(i) + "] servo")
                             print("ButtonA: [" + str(i) + "] servo")
-                            set_light(env, "yellow", 1)
                         else:
                             what_to_do[i, 1] = 0
                             log_write(__file__, "ButtonA: [" + str(i) + "] stop servo")
                             print("ButtonA: [" + str(i) + "] stop servo")
-                            set_light(env, "yellow", 0)
 
         # button B
         if keys_press_count[0, 1] % 2 == 1 or keys_press_count[1, 1] % 2 == 1:
@@ -148,7 +146,7 @@ def main(args):
 
     # button status init
     last_status = np.array(([0, 0, 0], [0, 0, 0]))  # init lock
-    thread_button = threading.Thread(target=button_monitor_realtime, args=(agent, env, ))
+    thread_button = threading.Thread(target=button_monitor_realtime, args=(agent, ))
     thread_button.start()
     print("button thread init success...")
 
@@ -187,6 +185,7 @@ def main(args):
             err2, last_action = obs_action_check(env, agent)
             assert err2 != 0, "main - follower diff too big!"
             start_servo = True
+            set_light(env, "yellow", 1)
         if (what_to_do[0, 1] or what_to_do[1, 1]) and start_servo:
             action = agent.act({})
             err3 = servo_action_check(action, last_action)
@@ -230,6 +229,8 @@ def main(args):
             # ×××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××
 
             # button B: recording or not
+            if dev_what_to_do[0, 2]:
+                set_light(env, "green", 1)
             if what_to_do[0, 2] == 1:
                 idx += 1
                 left_dir = save_dir + f"/{dt_time[0]}/leftImg/"
