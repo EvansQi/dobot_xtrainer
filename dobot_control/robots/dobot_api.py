@@ -529,7 +529,9 @@ class DobotApiDashboard(DobotApi):
 
     def GetAngle(self):
         string = "GetAngle()"
-        return self.sendRecvMsg(string)
+        return_str = self.sendRecvMsg(string)
+        log_write(__file__, "GetAngle return_str: " + return_str)
+        return return_str
 
     def GetPose(self):
         string = "GetPose()"
@@ -849,7 +851,7 @@ class DobotApiMove(DobotApi):
         """
         string = "ServoJ({:f},{:f},{:f},{:f},{:f},{:f},{:f},gain=500)".format(
             j1, j2, j3, j4, j5, j6, t)
-        log_write(__file__, "servoj: " + string)
+        # log_write(__file__, "servoj: " + string)
         self.send_data(string)
         # return self.sendRecvMsg(string)
 

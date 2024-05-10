@@ -94,14 +94,12 @@ def button_monitor_realtime(agent):
                     if keys_press_count[0, 2] % 2 == 1:
                         what_to_do[0, 2] = 1
                         log_write(__file__, "ButtonB: [" + str(i) + "] recording")
-                        set_light(env, "green", 1)
                         # new recording
                         now_time = datetime.datetime.now()
                         dt_time[0] = int(now_time.strftime("%Y%m%d%H%M%S"))
                     else:
                         what_to_do[0, 2] = 0
                         log_write(__file__, "ButtonB: [" + str(i) + "] stop recording")
-                        set_light(env, "green", 0)
 
         last_keys_status = now_keys
 
