@@ -3,6 +3,7 @@ import numpy as np
 from dobot_control.dynamixel.driver import DynamixelDriver
 MENAGERIE_ROOT: Path = Path(__file__).parent / "third_party" / "mujoco_menagerie"
 from scripts.manipulate_utils import load_ini_data_hands
+from scripts.function_util import scan_port
 
 
 def get_config(which_hand, which_hand_config):
@@ -24,7 +25,7 @@ def get_config(which_hand, which_hand_config):
     print("dev(angle): ", [np.rad2deg(i) for i in curr_joints])
     print("----------------------------------------------")
     gripper_on = int(np.rad2deg(pos_joint[-1]) - 0.2)
-    gripper_close = int(np.rad2deg(pos_joint[-1]) + 24)
+    gripper_close = int(np.rad2deg(pos_joint[-1]) + 30)
     print(
         "gripper open (degrees)       ",
         gripper_on,
@@ -38,6 +39,7 @@ def get_config(which_hand, which_hand_config):
 
 if __name__ == "__main__":
     # left hand nova2
+    scan_port()
     ini_file_path = str(Path(__file__).parent) + "/dobot_config/dobot_settings.ini"
     ini_file, hands_dict = load_ini_data_hands()
     for _hand in hands_dict.keys():

@@ -530,7 +530,7 @@ class DobotApiDashboard(DobotApi):
     def GetAngle(self):
         string = "GetAngle()"
         return_str = self.sendRecvMsg(string)
-        log_write(__file__, "GetAngle return_str: " + return_str)
+        # log_write(__file__, "GetAngle return_str: " + return_str)
         return return_str
 
     def GetPose(self):

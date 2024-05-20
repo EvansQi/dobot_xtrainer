@@ -137,7 +137,8 @@ class DobotGripper:
 
 
 def main():
-    gripper = DobotGripper(port="/dev/ttyUSB3", servo_pos=[2048, 980], id_name=22)
+    print(2048+2048-98)
+    gripper = DobotGripper(port="/dev/ttyUSB0", servo_pos=[2048, 3998], id_name=22)
     idx = 10
     for i in range(3):
         tic = time.time()

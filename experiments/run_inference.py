@@ -157,10 +157,10 @@ def main(args):
             print("Note!If the joint increment is larger than 10 degrees!!!")
             print("Do you want to continue running?Press the 'Y' key to continue, otherwise press the other button to stop the program!")
             temp_img = np.zeros(shape=(640, 480))
-            cv2.imshow("waitKey", temp_img)  # Make cv2.waitkey(0) work
+            cv2.imshow("waitKey", temp_img)  # 使cv2.waitkey(0)生效
             key = cv2.waitKey(0)
             # 检查按键
-            if key == ord('y') or key == ord('Y') :  # If press the 'Y' key
+            if key == ord('y') or key == ord('Y') :  # 如果按下'y'键
                 cv2.destroyWindows("waitKey")
                 # go to the position slowly
                 max_delta = (np.abs(last_action - action)).max()
@@ -169,7 +169,7 @@ def main(args):
                     env.step(jnt,np.array([1,1]))
             else:
                 protect_err = True
-                cv2.destroyAllWindows()
+                cv2.destroyAllWindows()  # 关闭所有窗口
 
         # Left arm joint angle limitations:  -150<J3<0    J4>-35  (Note: This angle needs to be converted to radians)
         # right arm joint angle limitations:  150>J3>0    J4<35   (Note: This angle needs to be converted to radians)
@@ -224,10 +224,9 @@ def main(args):
 
 
     thread_run = False
-    print("Task accomplished")
+    print("任务完成")
 
-    # Return to the starting position
-    # ...
+    # 归位
 
 
 if __name__ == "__main__":

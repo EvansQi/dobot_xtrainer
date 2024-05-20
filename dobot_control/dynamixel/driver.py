@@ -1,7 +1,7 @@
 import time
 from threading import Event, Lock, Thread
 from typing import Protocol, Sequence
-from scripts.function_util import mismatch_data_write, wait_period, log_write, mk_dir
+from scripts.function_util import mismatch_data_write, wait_period, log_write, mk_dir, scan_port
 import numpy as np
 from dynamixel_sdk.group_sync_read import GroupSyncRead
 from dynamixel_sdk.group_sync_write import GroupSyncWrite
@@ -95,7 +95,6 @@ class FakeDynamixelDriver(DynamixelDriverProtocol):
 
     def get_keys(self) -> np.ndarray:
         pass
-
 
 
 class DynamixelDriver(DynamixelDriverProtocol):
@@ -271,6 +270,7 @@ class DynamixelDriver(DynamixelDriverProtocol):
             time.sleep(0.1)
         with self._lock:
             _j = self._joint_angles.copy()
+        # print(_j, self._ids)
         return _j / 2048.0 * np.pi
 
     def close(self):
@@ -284,7 +284,7 @@ class DynamixelDriver(DynamixelDriverProtocol):
             time.sleep(0.01)
         with self._lock:
             key = self._joint_keys.copy()
-        log_write(__file__, "ButtonA: ["+str(key)+"] unlock")
+        # log_write(__file__, "ButtonA: ["+str(key)+"] unlock")
         return key
 
     # set p
@@ -303,24 +303,28 @@ class DynamixelDriver(DynamixelDriverProtocol):
     def set_pid_P(self):
         id_all = list(tuple(self._ids)[:6] + (self._append_id,))
         id_all.sort()
-        para = [5000, 5000, 5000, 4000, 4000, 4000, 4000]
+        para = [1000, 2000, 2000, 800, 4000, 4000, 4000]
+        # para = [460, 460, 460, 400, 400, 400, 400]
         for i in range(len(id_all)):
             self.set_joint_arg_2Byte(id_all[i], 84, para[i])
 
 
 def main():
     # Set the port, baudrate, and servo IDs
+    scan_port()
     ids_left = (1, 2, 4, 5, 6, 7, 8)
-    ids_right = (11, 12, 14, 15, 16, 17, 18)
+    # ids_right = (11, 12, 14, 15, 16, 17, 18)
     # Create a DynamixelDriver instance
-    driver1 = DynamixelDriver(ids_left, 3, "/dev/ttyUSB0")
-    driver2 = DynamixelDriver(ids_right, 13, "/dev/ttyUSB1")
-    driver1.set_torque_mode(False)
-    driver2.set_torque_mode(False)
-    while True:
-        joint_angles1 = driver1.get_joints()
-        joint_angles2 = driver2.get_joints()
-        print(joint_angles1[-1], joint_angles2[-1])
+    driver1 = DynamixelDriver(ids_left, 3, "/dev/ttyUSB2")
+    # driver2 = DynamixelDriver(ids_right, 13, "/dev/ttyUSB1")
+    driver1.set_torque_mode(True)
+    # driver2.set_torque_mode(False)
+    # while True:
+    joint_angles1 = driver1.get_joints()
+    print(joint_angles1)
+        # joint_angles2 = driver2.get_joints()
+        # print(joint_angles1[-1], joint_angles2[-1])
+        # print(driver1.get_keys())
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from gello.dynamixel.driver import FakeDynamixelDriver
+from dobot_control.dynamixel.driver import FakeDynamixelDriver
 
 
 @pytest.fixture

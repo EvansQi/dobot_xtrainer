@@ -1,11 +1,7 @@
-import os
 import time
 from typing import List, Optional, Tuple
-
 import numpy as np
-import shutil
 from dobot_control.cameras.camera import CameraDriver
-
 import cv2
 import pyrealsense2 as rs
 
@@ -28,7 +24,7 @@ class RealSenseCamera(CameraDriver):
 
     def __init__(self, device_id: Optional[str] = None, flip: bool = False):
         import pyrealsense2 as rs
-        print("init")
+        print("init", device_id)
         self._device_id = device_id
         self._pipeline = rs.pipeline()
         config = rs.config()
@@ -38,7 +34,7 @@ class RealSenseCamera(CameraDriver):
         config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 90)
         self._pipeline.start(config)
         self._flip = flip
-        print(device_id)
+        # print(device_id)
         for _ in range(50):
             self.read()
 

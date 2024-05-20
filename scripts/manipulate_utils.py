@@ -9,17 +9,17 @@ from dataclasses import dataclass
 
 def set_light(env, which_color, which_status):
     if which_color == "red":
-        env.set_do_status([3, 0])  # yellow light off
-        env.set_do_status([2, 0])  # green light off
-        env.set_do_status([1, which_status])  # red light on
-    elif which_color == "green":
-        env.set_do_status([3, 0])  # yellow light off
-        env.set_do_status([2, which_status])  # green light off
-        env.set_do_status([1, 0])  # red light on
+        env.set_do_status([3, 0])
+        env.set_do_status([2, 0])
+        env.set_do_status([1, which_status])
     elif which_color == "yellow":
-        env.set_do_status([3, which_status])  # yellow light off
-        env.set_do_status([2, 0])  # green light off
-        env.set_do_status([1, 0])  # red light on
+        env.set_do_status([3, 0])
+        env.set_do_status([2, which_status])
+        env.set_do_status([1, 0])
+    elif which_color == "green":
+        env.set_do_status([3, which_status])
+        env.set_do_status([2, 0])
+        env.set_do_status([1, 0])
 
 def load_ini_data_camera():
     camera_dict = {"top": None, "left": None, "right": None}
@@ -90,48 +90,6 @@ def robot_pose_init(env):
         env.step(jnt, [1, 1])
 
 
-# pose check between main hand and the follower
-def pose_check(env, agent):
-    start_pos = agent.act(env.get_obs())
-    obs = env.get_obs()
-    joints = obs["joint_positions"]
-    abs_deltas = np.abs(start_pos - joints)
-    id_max_joint_delta = np.argmax(abs_deltas)
-    max_joint_delta = 0.8
-    if abs_deltas[id_max_joint_delta] > max_joint_delta:
-        id_mask = abs_deltas > max_joint_delta
-        print()
-        ids = np.arange(len(id_mask))[id_mask]
-        for i, delta, joint, current_j in zip(
-                ids,
-                abs_deltas[id_mask],
-                start_pos[id_mask],
-                joints[id_mask],
-        ):
-            print(
-                f"joint[{i}]: \t delta: {delta:4.3f} , leader: \t{joint:4.3f} , follower: \t{current_j:4.3f}"
-            )
-        return 0
-    else:
-        print(f"Start pos: {len(start_pos)}", f"Joints: {len(joints)}")
-        if len(start_pos) == len(joints):
-            return 1
-        else:
-            return 0
-
-
-# dynamic approaching
-def dynamic_approach(env, agent, flag_in):
-    start_pos = agent.act(env.get_obs())
-    obs = env.get_obs()
-    joints = obs["joint_positions"]
-    abs_deltas = max(np.abs(start_pos - joints))
-    steps = min(int(abs_deltas / 0.005), 100)
-    for jnt in np.linspace(joints, start_pos, steps):
-        env.step(jnt, flag_in)
-    # time.sleep(0.5)
-
-
 # main hand pose dev check
 def obs_action_check(env, agent):
     obs = env.get_obs()
@@ -151,19 +109,54 @@ def obs_action_check(env, agent):
 
 
 # nova2 dev joint check
-def servo_action_check(action, last_action, step_len=0.1):
+def servo_action_check(action, last_action, step_len=0.6):
     if (np.abs(action - last_action) > step_len).any():
-        print("Servo action dev is too big")
         joint_index = np.where(np.abs(action - last_action) > step_len)
-        print(action)
-        print(last_action)
+        print("action: ", action)
+        print("last_action: ", last_action)
         for j in joint_index[0]:
             if j != 6 and j != 13:
-                print(f"Joint [{j}], leader: {action[j]}, follower: {last_action[j]}, diff: {action[j] - last_action[j]}")
-                return 0
+                pi_2_cal = (action[j] - last_action[j])/np.pi
+                if abs(pi_2_cal) > 1.9 and abs(pi_2_cal) < 2.1:
+                    action[j] = action[j] - 2 * np.pi * (pi_2_cal / abs(pi_2_cal))
+                else:
+                    print("Servo action dev is too big")
+                    print(
+                        f"Joint [{j}], leader: {action[j]}, follower: {last_action[j]}, "
+                        f"diff: {(action[j] - last_action[j])/np.pi}")
+                    return 0, action
+    return 1, action
 
-    return 1
+
+# pose check between main hand and the follower
+def pose_check(env, agent):
+    start_pos = agent.act(env.get_obs())
+    obs = env.get_obs()
+    joints = obs["joint_positions"]
+    err_pose_check, action_return = servo_action_check(start_pos, joints)
+    if err_pose_check:
+        return 1, action_return
+    else:
+        return 0, action_return
+
+# dynamic approaching
+def dynamic_approach(env, agent, flag_in):
+    err1, action1 = pose_check(env, agent)
+    assert err1 != 0, "calibration error!"
+    obs = env.get_obs()
+    joints = obs["joint_positions"]
+    abs_deltas = max(np.abs(action1 - joints))
+    steps = min(int(abs_deltas / 0.001), 100)
+    for jnt in np.linspace(joints, action1, steps):
+        env.step(jnt, flag_in)
+    # time.sleep(0.5)
+    return  action1
 
 
 if __name__ == "__main__":
-    print(load_ini_data_camera())
+    action = np.array([1.0+2*np.pi+0.2, 1, 1, 1, 1, 1, 1,
+                    1, 1, 1, 1, 1, 1, 1])
+    action_last = np.array([1.0, 1, 1, 1, 1, 1, 1,
+                    1, 1, 1, 1, 1, 1, 1])
+    err, action = servo_action_check(action, action_last)
+    print(action)

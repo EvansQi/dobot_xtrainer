@@ -4,6 +4,8 @@ import time
 from dobot_control.robots.robot import Robot
 import struct
 from scripts.manipulate_utils import load_ini_data_hands, load_ini_data_gripper
+from scripts.manipulate_utils import robot_pose_init, pose_check, dynamic_approach, obs_action_check, servo_action_check, load_ini_data_hands, set_light, load_ini_data_camera
+
 
 
 
@@ -192,8 +194,11 @@ class DobotRobot(Robot):
 
 def main():
     dobot = DobotRobot("192.168.5.1", no_gripper=False)
-    dobot = DobotRobot("192.168.5.2", no_gripper=False)
     dobot.set_do_status([1, 0])
+    dobot.set_do_status([2, 0])
+    dobot.set_do_status([3, 0])
+    # dobot = DobotRobot("192.168.5.2", no_gripper=False)
+    # set_light(dobot, "red", 0)
 
 
 if __name__ == "__main__":
