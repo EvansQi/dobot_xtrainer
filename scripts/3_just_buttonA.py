@@ -10,7 +10,7 @@ import threading
 from dobot_control.agents.agent import BimanualAgent
 from scripts.function_util import mismatch_data_write, wait_period, log_write, mk_dir
 from scripts.manipulate_utils import robot_pose_init, pose_check, dynamic_approach, obs_action_check, servo_action_check, load_ini_data_hands
-from dobot_control.agents.dobot_agent import GelloAgent
+from dobot_control.agents.dobot_agent import DobotAgent
 
 
 @dataclass
@@ -55,22 +55,22 @@ def button_monitor_realtime(agent):
                         # print(i, keys_press_count[i, 0], "short press", toc-tic)
                         if keys_press_count[i, 0] % 2 == 1:
                             what_to_do[i, 0] = 1
-                            log_write(__file__, "ButtonA: ["+str(i)+"] unlock")
+                            # log_write(__file__, "ButtonA: ["+str(i)+"] unlock")
                             print("ButtonA: [" + str(i) + "] unlock", what_to_do)
                         else:
                             what_to_do[i, 0] = 0
-                            log_write(__file__, "ButtonA: [" + str(i) + "] lock")
+                            # log_write(__file__, "ButtonA: [" + str(i) + "] lock")
                             print("ButtonA: [" + str(i) + "] lock", what_to_do)
                     elif toc-tic > 1:
                         keys_press_count[i, 1] += 1
                         # print(i, keys_press_count[i, 1], "long press", toc-tic)
                         if keys_press_count[i, 1] % 2 == 1:
                             what_to_do[i, 1] = 1
-                            log_write(__file__, "ButtonA: [" + str(i) + "] servo")
+                            # log_write(__file__, "ButtonA: [" + str(i) + "] servo")
                             print("ButtonA: [" + str(i) + "] servo")
                         else:
                             what_to_do[i, 1] = 0
-                            log_write(__file__, "ButtonA: [" + str(i) + "] stop servo")
+                            # log_write(__file__, "ButtonA: [" + str(i) + "] stop servo")
                             print("ButtonA: [" + str(i) + "] stop servo")
 
         # button B
@@ -84,18 +84,18 @@ def button_monitor_realtime(agent):
                     # print(i, keys_press_count[i, 1], "recording")
                     if keys_press_count[0, 2] % 2 == 1:
                         what_to_do[0, 2] = 1
-                        log_write(__file__, "ButtonB: [" + str(i) + "] recording")
+                        # log_write(__file__, "ButtonB: [" + str(i) + "] recording")
                     else:
                         what_to_do[0, 2] = 0
-                        log_write(__file__, "ButtonB: [" + str(i) + "] stop recording")
+                        # log_write(__file__, "ButtonB: [" + str(i) + "] stop recording")
 
         last_keys_status = now_keys
 
 
 def main(args):
     _, hands_dict = load_ini_data_hands()
-    left_agent = GelloAgent(which_hand="LEFT", dobot_config=hands_dict["HAND_LEFT"])
-    right_agent = GelloAgent(which_hand="RIGHT", dobot_config=hands_dict["HAND_RIGHT"])
+    left_agent = DobotAgent(which_hand="LEFT", dobot_config=hands_dict["HAND_LEFT"])
+    right_agent = DobotAgent(which_hand="RIGHT", dobot_config=hands_dict["HAND_RIGHT"])
     agent = BimanualAgent(left_agent, right_agent)
 
     last_status = np.array(([0, 0, 0], [0, 0, 0]))  # init lock

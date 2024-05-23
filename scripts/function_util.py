@@ -35,7 +35,7 @@ def scan_port():
         computer_passwd = ini_file.get("COMPUTER", "passcode")
         comd = f"echo {computer_passwd} | sudo -S chmod 777 {_port}"
         subprocess.run(comd, shell=True)
-    print(com_list)
+    # print(com_list)
     return com_list
 
 # make new dir
@@ -144,5 +144,6 @@ def save_videos(video, dt, video_path=None):
         print(f'Saved video to: {video_path}')
 
 if __name__ == "__main__":
-    left_usb = "/sys/bus/usb-serial/devices"
-    free_limit_and_set_one("/sys/bus/usb-serial/devices/ttyUSB2/latency_timer")
+    # left_usb = "/sys/bus/usb-serial/devices"
+    # free_limit_and_set_one("/sys/bus/usb-serial/devices/ttyUSB2/latency_timer")
+    scan_port()

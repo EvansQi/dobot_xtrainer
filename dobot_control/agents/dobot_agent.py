@@ -37,7 +37,7 @@ class DobotRobotConfig:
             start_joints=start_joints,
         )
 
-class GelloAgent(Agent):
+class DobotAgent(Agent):
     def __init__(
         self,
         which_hand: str,
@@ -65,38 +65,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    ini_file_path = os.path.dirname(__file__).replace("gello/agents", '')+"scripts/dobot_config/dobot_settings.ini"
+    ini_file_path = os.path.dirname(__file__).replace("dobot_control/agents", '')+"scripts/dobot_config/dobot_settings.ini"
     ini_file = configparser.ConfigParser()
     ini_file.read(ini_file_path)
-
-    hands_dict = {"HAND_LEFT": None, "HAND_RIGHT": None}
-    for _hand in hands_dict.keys():
-        hands_dict[_hand] = DobotRobotConfig(
-                    joint_ids=[int(i) for i in ini_file.get(_hand, "joint_ids").split(",")],
-                    append_id=int(ini_file.get(_hand, "append_id")),
-                    port=ini_file.get(_hand, "port"),
-                    joint_offsets=[float(i) for i in ini_file.get(_hand, "joint_offsets").split(",")],
-                    joint_signs=[int(i) for i in ini_file.get(_hand, "joint_signs").split(",")],
-                    gripper_config=[int(i) for i in ini_file.get(_hand, "gripper_config").split(",")],
-                    start_joints=[float(i) for i in ini_file.get(_hand, "start_joints").split(",")])
-    print("ssss: ", hands_dict["HAND_LEFT"].joint_ids)
-    print("ssss: ", hands_dict["HAND_RIGHT"].joint_ids)
-    left_agent = GelloAgent(which_hand="HAND_LEFT", dobot_config=hands_dict["HAND_LEFT"])
-    right_agent = GelloAgent(which_hand="HAND_RIGHT", dobot_config=hands_dict["HAND_RIGHT"])
-
-    # # right_agent.set_torque(False)
-    # left_agent.set_torque(False)
-
-    while 1:
-        tic = time.time()
-        print(left_agent.act({}))
-        # print(right_agent.act({}))
-    #     # aaa = left_agent.act({})
-    #     toc = time.time()
-    #     # print("sssssss: ", toc-tic)
-    # #     if dev_keys[0, 0] == -1:
-        print(left_agent.get_keys(), right_agent.get_keys())
-    # #     print(right_agent.get_keys())
-    #     # wait_period(20, tic)
-    #     # toc = time.time()
-    #     # print("aaaaaaaaaaaa", toc-tic)

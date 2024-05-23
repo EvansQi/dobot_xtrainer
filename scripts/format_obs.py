@@ -28,23 +28,8 @@ def save_action(recorded_file,action: np.ndarray):
 
 
 if __name__ == "__main__":
-    save_path = "/home/dobot/gello/data/0202_172214/trace.pkl"
     # test write
-    # act = [1,2,3,4,5,6]
-    # for i in range(5):
-    #     save_action(save_path,act)
-    #     print(i)
-
-    # test read
-    with open(save_path, 'rb') as file:
-        while True:
-            try:
-                loaded_data = pickle.load(file)
-
-                # 打印加载的对象
-                print(loaded_data)
-            except EOFError:
-                break
+    act = [1,2,3,4,5,6]
 
 
 
