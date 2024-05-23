@@ -166,6 +166,7 @@ def main(args):
 
     print("-------------------------Ok, let's start------------------------")
     idx = 0
+    total_time = 0.04
     while 1:
         tic = time.time()
         action = agent.act({})
