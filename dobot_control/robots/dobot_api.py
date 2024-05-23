@@ -142,13 +142,14 @@ class DobotApi:
             self.text_log = args[0]
 
         if self.port == 29999 or self.port == 30003 or self.port == 30004:
+            self.socket_dobot = socket.socket()
+            self.socket_dobot.settimeout(3)
             try:
-                self.socket_dobot = socket.socket()
                 self.socket_dobot.connect((self.ip, self.port))
             except socket.error:
-                print(socket.error)
+                # print(socket.error)
                 raise Exception(
-                    f"Unable to set socket connection use port {self.port} !", socket.error)
+                    f"Unable to connect to the follower robot arm, IP is  {self.IP} , port is {self.port} ")
         else:
             raise Exception(
                 f"Connect to dashboard server need use port {self.port} !")
