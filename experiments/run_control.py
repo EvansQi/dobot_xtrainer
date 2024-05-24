@@ -148,7 +148,9 @@ def main(args):
     agent = BimanualAgent(left_agent, right_agent)
 
     # pose init
+    print("Waiting to connect the robot...")
     robot_client = ZMQClientRobot(port=args.robot_port, host=args.hostname)
+    print("If the robot fails to initialize successfully after 5 seconds,please check that the robot network is connected correctly and make sure TCP/IP mode is turned!")
     env = RobotEnv(robot_client)
     env.set_do_status([1, 0])
     env.set_do_status([2, 0])
@@ -199,10 +201,16 @@ def main(args):
             # J2, J3 speed limit to prevent falling: 2 rad/s
             protect_err = False
             delta = np.abs(action - last_action) / total_time
-            if max(delta[1:3]) > 2 or max(delta[8:10]) > 2:
-                print("[Warn]:The speed of the joint is moving too fast!")
-                print(delta)
-                protect_err = True
+            if what_to_do[0, 1]:  # The left hand is in sync
+                if max(delta[1:3]) > 2:
+                    print("[Warn]:The speed of the joint is moving too fast!")
+                    print(delta)
+                    protect_err = True
+            if what_to_do[1, 1]:  # The right hand is in sync
+                if max(delta[8:10]) > 2:
+                    print("[Warn]:The speed of the joint is moving too fast!")
+                    print(delta)
+                    protect_err = True
 
             # Left arm joint angle limitations:  -150<J3<0    J4>-35  (Note: This angle needs to be converted to radians)
             # right arm joint angle limitations:  150>J3>0    J4<35   (Note: This angle needs to be converted to radians)
