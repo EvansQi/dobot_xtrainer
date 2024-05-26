@@ -48,58 +48,55 @@ def button_monitor_realtime(agent):
         dev_keys = now_keys - last_keys_status
         # button a
         for i in range(2):
-            if keys_press_count[0, 2] % 2 == 0:    # not recording
-                if dev_keys[i, 0] == -1:  # button a: start
-                    tic = time.time()
-                    start_press_status[i, 0] = 1
-                if dev_keys[i, 0] == 1 and start_press_status[i, 0]:  # button a: end
-                    start_press_status[i, 0] = 0
-                    toc = time.time()
-                    if toc-tic < 0.4:
-                        keys_press_count[i, 0] += 1
-                        # print(i, keys_press_count[i, 0], "short press", toc-tic)
-                        if keys_press_count[i, 0] % 2 == 1:
-                            what_to_do[i, 0] = 1
-                            # log_write(__file__, "ButtonA: ["+str(i)+"] unlock")
-                            print("ButtonA: [" + str(i) + "] unlock", what_to_do)
-                        else:
-                            what_to_do[i, 0] = 0
-                            # log_write(__file__, "ButtonA: [" + str(i) + "] lock")
-                            print("ButtonA: [" + str(i) + "] lock", what_to_do)
-                            if what_to_do[i, 1] == 1:   # when servo, lock on, stop servo
-                                keys_press_count[i, 1] += 1
-                                what_to_do[i, 1] = 0
+            if dev_keys[i, 0] == -1:  # button a: start
+                tic = time.time()
+                start_press_status[i, 0] = 1
+            if dev_keys[i, 0] == 1 and start_press_status[i, 0]:  # button a: end
+                start_press_status[i, 0] = 0
+                toc = time.time()
+                if toc-tic < 0.5:
+                    keys_press_count[i, 0] += 1
+                    # print(i, keys_press_count[i, 0], "short press", toc-tic)
+                    if keys_press_count[i, 0] % 2 == 1:
+                        what_to_do[i, 0] = 1
+                        # log_write(__file__, "ButtonA: ["+str(i)+"] unlock")
+                        print("ButtonA: [" + str(i) + "] unlock", what_to_do)
+                    else:
+                        what_to_do[i, 0] = 0
+                        # log_write(__file__, "ButtonA: [" + str(i) + "] lock")
+                        print("ButtonA: [" + str(i) + "] lock", what_to_do)
 
-                    elif toc-tic > 1:
-                        keys_press_count[i, 1] += 1
-                        # print(i, keys_press_count[i, 1], "long press", toc-tic)
-                        if keys_press_count[i, 1] % 2 == 1:
-                            what_to_do[i, 1] = 1
-                            # log_write(__file__, "ButtonA: [" + str(i) + "] servo")
-                            print("ButtonA: [" + str(i) + "] servo")
-                        else:
-                            what_to_do[i, 1] = 0
-                            # log_write(__file__, "ButtonA: [" + str(i) + "] stop servo")
-                            print("ButtonA: [" + str(i) + "] stop servo")
+                elif toc-tic > 1:
+                    keys_press_count[i, 1] += 1
+                    # print(i, keys_press_count[i, 1], "long press", toc-tic)
+                    if keys_press_count[i, 1] % 2 == 1:
+                        what_to_do[i, 1] = 1
+                        # log_write(__file__, "ButtonA: [" + str(i) + "] servo")
+                        print("ButtonA: [" + str(i) + "] servo")
+                    else:
+                        what_to_do[i, 1] = 0
+                        # log_write(__file__, "ButtonA: [" + str(i) + "] stop servo")
+                        print("ButtonA: [" + str(i) + "] stop servo")
 
         # button B
-        if keys_press_count[0, 1] % 2 == 1 or keys_press_count[1, 1] % 2 == 1:
-            for i in range(2):
-                if dev_keys[i, 1] == -1:  # B button pressed
-                    start_press_status[i, 1] = 1
-                if dev_keys[i, 1] == 1:
-                    start_press_status[i, 1] = 0
-                    keys_press_count[0, 2] += 1
-                    # print(i, keys_press_count[i, 1], "recording")
-                    if keys_press_count[0, 2] % 2 == 1:
+        # more than one start servo
+        for i in range(2):
+            if dev_keys[i, 1] == -1:  # B button pressed
+                start_press_status[i, 1] = 1
+            if dev_keys[i, 1] == 1:
+                start_press_status[i, 1] = 0
+                if keys_press_count[0, 2] % 2 == 1:
+                    if keys_press_count[0, 1] % 2 == 1 or keys_press_count[1, 1] % 2 == 1:
                         what_to_do[0, 2] = 1
                         # log_write(__file__, "ButtonB: [" + str(i) + "] recording")
                         # new recording
                         now_time = datetime.datetime.now()
                         dt_time[0] = int(now_time.strftime("%Y%m%d%H%M%S"))
-                    else:
-                        what_to_do[0, 2] = 0
-                        # log_write(__file__, "ButtonB: [" + str(i) + "] stop recording")
+                        keys_press_count[0, 2] += 1
+                else:
+                    what_to_do[0, 2] = 0
+                    keys_press_count[0, 2] += 1
+                    # log_write(__file__, "ButtonB: [" + str(i) + "] stop recording")
 
         last_keys_status = now_keys
 
@@ -179,22 +176,30 @@ def main(args):
         for i in range(2):
             if dev_what_to_do[i, 0] != 0:
                 agent.set_torque(i, not what_to_do[i, 0])
-                if not what_to_do[0, 0] and not what_to_do[1, 0]:
-                    set_light(env, "yellow", 0)
 
         # button A: long press event. servo or not
         if dev_what_to_do[0, 1] == 1 or dev_what_to_do[1, 1] == 1:
             # pose check between main hand and the follower
             print("dynamic approach")
-            last_action = dynamic_approach(env, agent, np.array([what_to_do[0, 1], what_to_do[1, 1]]))
-            # err2, last_action = obs_action_check(env, agent)
-            # assert err1 != 0, "main - follower diff too big!"
+            for i in range(2):
+                if what_to_do[i, 1]:
+                    agent.set_torque(i, True)
+            flag_in = np.array([what_to_do[0, 1], what_to_do[1, 1]])
+            last_action = dynamic_approach(env, agent, flag_in)
+            for i in range(2):
+                if what_to_do[i, 0]:
+                    if what_to_do[i, 1]:
+                        agent.set_torque(i, False)
             start_servo = True
             set_light(env, "yellow", 1)
+
+        if dev_what_to_do[0, 1] == -1 or dev_what_to_do[1, 1] == -1:
+            flag_in = np.array([what_to_do[0, 1], what_to_do[1, 1]])
+
         if (what_to_do[0, 1] or what_to_do[1, 1]) and start_servo:
             action = agent.act({})
-            err3, action = servo_action_check(action, last_action)
-            assert err3 != 0, "servo diff too big!"
+            err3, action = servo_action_check(action, last_action, flag_in)
+            assert err3 != 0, set_light(env, "red", 1)
 
             # ×××××××××××××××××××××××××××××Security protection×××××××××××××××××××××××××××××××××××××××××××
             # [Note]: Modify the protection parameters in this section carefully !
@@ -258,7 +263,7 @@ def main(args):
                 np.save(right_dir + f"{idx}.npy", npy_list[1][:npy_len_list[1]])
                 np.save(top_dir + f"{idx}.npy", npy_list[2][:npy_len_list[2]])
 
-            obs = env.step(action, np.array([what_to_do[0, 1], what_to_do[1, 1]]))
+            obs = env.step(action, flag_in)
 
             if what_to_do[0, 2] == 1:
                 obs_dir = save_dir + f"/{dt_time[0]}/observation/"
@@ -267,6 +272,7 @@ def main(args):
             last_action = action
         else:
             start_servo = False
+            set_light(env, "yellow", 0)
 
         # img show
         if args.show_img:

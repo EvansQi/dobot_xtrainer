@@ -50,7 +50,7 @@ def button_monitor_realtime(agent):
                 if dev_keys[i, 0] == 1 and start_press_status[i, 0]:  # button a: end
                     start_press_status[i, 0] = 0
                     toc = time.time()
-                    if toc-tic < 0.2:
+                    if toc-tic < 0.5:
                         keys_press_count[i, 0] += 1
                         # print(i, keys_press_count[i, 0], "short press", toc-tic)
                         if keys_press_count[i, 0] % 2 == 1:

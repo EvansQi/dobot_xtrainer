@@ -5,6 +5,7 @@ from dobot_control.agents.dobot_agent import DobotRobotConfig
 import os
 from pathlib import Path
 from dataclasses import dataclass
+from scripts.function_util import wait_period, log_write
 
 
 def set_light(env, which_color, which_status):
@@ -109,15 +110,23 @@ def obs_action_check(env, agent):
 
 
 # nova2 dev joint check
-def servo_action_check(action, last_action, step_len=0.6):
+def servo_action_check(action, last_action, flag_in, step_len=0.9):
+    ind_list = []
+    if flag_in[0] and not flag_in[1]:
+        ind_list = [i for i in range(6)]
+    elif not flag_in[0] and flag_in[1]:
+        ind_list = [i+7 for i in range(6)]
+    elif flag_in[0] and flag_in[1]:
+        ind_list = [i for i in range(14)]
+    assert len(ind_list), "err in servo_action_check"
     if (np.abs(action - last_action) > step_len).any():
         joint_index = np.where(np.abs(action - last_action) > step_len)
         print("action: ", action)
         print("last_action: ", last_action)
         for j in joint_index[0]:
-            if j != 6 and j != 13:
+            if j != 6 and j != 13 and (j in ind_list):
                 pi_2_cal = (action[j] - last_action[j])/np.pi
-                if abs(pi_2_cal) > 1.9 and abs(pi_2_cal) < 2.1:
+                if abs(pi_2_cal) > 1.85 and abs(pi_2_cal) < 2.15:
                     action[j] = action[j] - 2 * np.pi * (pi_2_cal / abs(pi_2_cal))
                 else:
                     print("Servo action dev is too big")
@@ -129,34 +138,44 @@ def servo_action_check(action, last_action, step_len=0.6):
 
 
 # pose check between main hand and the follower
-def pose_check(env, agent):
+def pose_check(env, agent, flag_in):
     start_pos = agent.act(env.get_obs())
     obs = env.get_obs()
     joints = obs["joint_positions"]
-    err_pose_check, action_return = servo_action_check(start_pos, joints)
+    err_pose_check, action_return = servo_action_check(start_pos, joints, flag_in)
     if err_pose_check:
         return 1, action_return
     else:
         return 0, action_return
 
-# dynamic approaching
+
 def dynamic_approach(env, agent, flag_in):
-    err1, action1 = pose_check(env, agent)
-    assert err1 != 0, "calibration error!"
+    err1, action1 = pose_check(env, agent, flag_in)
+    assert err1 != 0, set_light(env, "red", 1)
     obs = env.get_obs()
     joints = obs["joint_positions"]
+    # log_write(__file__, "joints: " + str(joints))
+    # log_write(__file__, "action1: " + str(action1))
     abs_deltas = max(np.abs(action1 - joints))
-    steps = min(int(abs_deltas / 0.001), 100)
+    # log_write(__file__,  "abs_deltas: " + str(abs_deltas))
+    steps = int(abs_deltas / 0.01)
+    # log_write(__file__, "steps: " + str(steps))
+
     for jnt in np.linspace(joints, action1, steps):
         env.step(jnt, flag_in)
-    # time.sleep(0.5)
-    return  action1
+        tic = time.time()
+        wait_period(50, tic)
+
+        # log_write(__file__, "flag_in: " + str(flag_in))
+        # log_write(__file__, "jnt: " + str(jnt))
+    # time.sleep(0.05)
+    return action1
 
 
 if __name__ == "__main__":
     action = np.array([1.0+2*np.pi+0.2, 1, 1, 1, 1, 1, 1,
-                    1, 1, 1, 1, 1, 1, 1])
+                    1, 1.0, 1, 1, 1, 1, 1])
     action_last = np.array([1.0, 1, 1, 1, 1, 1, 1,
-                    1, 1, 1, 1, 1, 1, 1])
-    err, action = servo_action_check(action, action_last)
+                    1, 1.0+2*np.pi+0.2, 1, 1, 1, 1, 1])
+    err, action = servo_action_check(action, action_last, [1, 1])
     print(action)
