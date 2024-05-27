@@ -208,23 +208,27 @@ def main(args):
             delta = np.abs(action - last_action) / total_time
             if what_to_do[0, 1]:  # The left hand is in sync
                 if max(delta[1:3]) > 2:
-                    print("[Warn]:The speed of the joint is moving too fast!")
+                    print("[Warn]:The left robot speed of the joint is moving too fast!")
                     print(delta)
                     protect_err = True
-            if what_to_do[1, 1]:  # The right hand is in sync
-                if max(delta[8:10]) > 2:
-                    print("[Warn]:The speed of the joint is moving too fast!")
-                    print(delta)
+                # Left arm joint angle limitations:  -150<J3<0    J4>-45  (Note: This angle needs to be converted to radians)
+                if not (action[2] > -2.6 and action[2] < 0 and action[3] > -0.78):
+                    print("[Warn]:The J3 or J4 joints of the robotic arm are out of the safe position! ")
+                    print(action)
+                    print(last_action)
                     protect_err = True
 
-            # Left arm joint angle limitations:  -150<J3<0    J4>-35  (Note: This angle needs to be converted to radians)
-            # right arm joint angle limitations:  150>J3>0    J4<35   (Note: This angle needs to be converted to radians)
-            if not ((action[2] > -2.6 and action[2] < 0 and action[3] > -0.6) and \
-                    (action[9] < 2.6 and action[9] > 0 and action[10] < 0.6)):
-                print("[Warn]:The J3 or J4 joints of the robotic arm are out of the safe position! ")
-                print(action)
-                print(last_action)
-                protect_err = True
+            if what_to_do[1, 1]:  # The right hand is in sync
+                if max(delta[8:10]) > 2:
+                    print("[Warn]:The right robot speed of the joint is moving too fast!")
+                    print(delta)
+                    protect_err = True
+                # right arm joint angle limitations:  150>J3>0    J4<45   (Note: This angle needs to be converted to radians)
+                if not (action[9] < 2.6 and action[9] > 0 and action[10] < 0.78):
+                    print("[Warn]:The J3 or J4 joints of the robotic arm are out of the safe position! ")
+                    print(action)
+                    print(last_action)
+                    protect_err = True
 
             # left arm (jaw tip position) limit:  210>x>-410  -700<Y<-210  z>47;
             # right arm (jaw tip position) limit:  410>x>-210  -700<Y<-210  z>47;
