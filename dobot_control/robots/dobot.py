@@ -23,7 +23,8 @@ class DobotRobot(Robot):
             self.robot = dobot_api.DobotApiMove(robot_ip, 30003)   # 运动指令的端�?
         except Exception as e:
             print(e)
-            print(robot_ip)
+            print("Please check that the robot network is connected correctly and make sure TCP/IP mode is turned!")
+            sys.exit()
         self.robot_ip = robot_ip
         self.r_inter = dobot_api.DobotApiDashboard(robot_ip, 29999)  # 获取信息指令的端�?
         self.r_inter.EnableRobot()  # 上使能机械臂，发送指令前必须执行�?
