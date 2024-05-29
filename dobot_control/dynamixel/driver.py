@@ -303,7 +303,7 @@ class DynamixelDriver(DynamixelDriverProtocol):
     def set_pid_P(self):
         id_all = list(tuple(self._ids)[:6] + (self._append_id,))
         id_all.sort()
-        para = [1000, 2000, 2000, 800, 4000, 4000, 4000]
+        para = [1000, 2000, 2000, 600, 3000, 3000, 3000]
         # para = [460, 460, 460, 400, 400, 400, 400]
         for i in range(len(id_all)):
             self.set_joint_arg_2Byte(id_all[i], 84, para[i])

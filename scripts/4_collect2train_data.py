@@ -25,7 +25,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Args:
-    dataset_name: str = "dataset1_cleanDish"
+    dataset_name: str = "dataset_package_new"
     task_name: str = "dobot_task"
     MIRROR_STATE_MULTIPLY: list = (1, 1, 1, 1, 1, 1, 1)
     MIRROR_BASE_MULTIPLY: tuple = (1, 1)
@@ -45,7 +45,8 @@ def deal_data(pos_list, top_list, left_list, right_list):
                 right_list.remove(right_list[i])
     elif len(pos_list) > len(top_list):
         for i in range(len(pos_list)):
-            file_name = pos_list[i].split("/")[-1].split(".")[0] + ".npy"
+            # file_name = pos_list[i].split("/")[-1].split(".")[0] + ".npy"
+            file_name = pos_list[i].split("/")[-1].split(".")[0] + ".jpg"
             if not os.path.exists(os.path.dirname(pos_list[0])+f"/{file_name}"):
                 print(pos_list[i])
                 os.remove(pos_list[i])
@@ -58,9 +59,12 @@ def load_data(args, one_dataset_dir):
     print(camera_names)
 
     data_pose_list = glob.glob(one_dataset_dir + 'observation/*.pkl')
-    images_top_list = glob.glob(one_dataset_dir + 'topImg/*.npy')
-    images_left_list = glob.glob(one_dataset_dir + 'leftImg/*.npy')
-    images_right_list = glob.glob(one_dataset_dir + 'rightImg/*.npy')
+    # images_top_list = glob.glob(one_dataset_dir + 'topImg/*.npy')
+    # images_left_list = glob.glob(one_dataset_dir + 'leftImg/*.npy')
+    # images_right_list = glob.glob(one_dataset_dir + 'rightImg/*.npy')
+    images_top_list = glob.glob(one_dataset_dir + 'topImg/*.jpg')
+    images_left_list = glob.glob(one_dataset_dir + 'leftImg/*.jpg')
+    images_right_list = glob.glob(one_dataset_dir + 'rightImg/*.jpg')
     data_pose_list.sort(key=lambda x: int(x.split("/")[-1].split(".")[0]))
     images_top_list.sort(key=lambda x: int(x.split("/")[-1].split(".")[0]))
     images_left_list.sort(key=lambda x: int(x.split("/")[-1].split(".")[0]))
@@ -85,9 +89,12 @@ def load_data(args, one_dataset_dir):
             qpos.append(data_single['joint_positions'])
             qvel.append(data_single['joint_velocities'])
             action.append(data_single['control'])
-            image_top = cv2.imdecode(np.asarray(np.load(images_top_list[i]), dtype="uint8"), cv2.IMREAD_COLOR)
-            image_left = cv2.imdecode(np.asarray(np.load(images_left_list[i]), dtype="uint8"), cv2.IMREAD_COLOR)
-            image_right = cv2.imdecode(np.asarray(np.load(images_right_list[i]), dtype="uint8"), cv2.IMREAD_COLOR)
+            # image_top = cv2.imdecode(np.asarray(np.load(images_top_list[i]), dtype="uint8"), cv2.IMREAD_COLOR)
+            # image_left = cv2.imdecode(np.asarray(np.load(images_left_list[i]), dtype="uint8"), cv2.IMREAD_COLOR)
+            # image_right = cv2.imdecode(np.asarray(np.load(images_right_list[i]), dtype="uint8"), cv2.IMREAD_COLOR)
+            image_top = cv2.imread(images_top_list[i])
+            image_left = cv2.imread(images_left_list[i])
+            image_right = cv2.imread(images_right_list[i])
             # cv2.imshow("0", image_right)
             # cv2.waitKey(1)
             image_li[0].append(image_top)

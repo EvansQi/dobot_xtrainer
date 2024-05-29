@@ -117,17 +117,23 @@ class BimanualRobot(Robot):
         self.frequency_ = 1/0.015
         # Set delta time to be used by receiveCallback
         self.delta_time_ = 1 / self.frequency_
+        assert not self._robot_l.robot_is_err, "left robot error!"
+        assert not self._robot_r.robot_is_err, "right robot error!"
 
     def num_dofs(self) -> int:
         return self._robot_l.num_dofs() + self._robot_r.num_dofs()
 
     def get_joint_state(self) -> np.ndarray:
+        assert not self._robot_l.robot_is_err, "left robot error!"
+        assert not self._robot_r.robot_is_err, "right robot error!"
         return np.concatenate(
             (self._robot_l.get_joint_state(), self._robot_r.get_joint_state())
         )
 
     def command_joint_state(self, joint_state: np.ndarray, flag_in) -> None:
         t_start = time.time()
+        assert not self._robot_l.robot_is_err, "left robot error!"
+        assert not self._robot_r.robot_is_err, "right robot error!"
         # print("t_start:",t_start)
         if flag_in[0]:
             self._robot_l.command_joint_state(joint_state[: self._robot_l.num_dofs()])
@@ -138,6 +144,8 @@ class BimanualRobot(Robot):
         return 1
 
     def get_observations(self) -> Dict[str, np.ndarray]:
+        assert not self._robot_l.robot_is_err, "left robot error!"
+        assert not self._robot_r.robot_is_err, "right robot error!"
         l_obs = self._robot_l.get_observations()
         r_obs = self._robot_r.get_observations()
         assert l_obs.keys() == r_obs.keys()
@@ -155,9 +163,13 @@ class BimanualRobot(Robot):
         return return_obs
 
     def set_do_status(self, which_do):
+        assert not self._robot_l.robot_is_err, "left robot error!"
+        assert not self._robot_r.robot_is_err, "right robot error!"
         self._robot_l.set_do_status(which_do)
 
     def get_XYZrxryrz_state(self) -> np.ndarray:
+        assert not self._robot_l.robot_is_err, "left robot error!"
+        assert not self._robot_r.robot_is_err, "right robot error!"
         return np.concatenate(
             (self._robot_l.get_XYZrxryrz_state(), self._robot_r.get_XYZrxryrz_state())
         )
