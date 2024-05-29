@@ -24,9 +24,9 @@ from pathlib import Path
 class Args:
     robot_port: int = 6001
     hostname: str = "127.0.0.1"
-    show_img: bool = True
+    show_img: bool = False
     save_data_path = str(Path(__file__).parent.parent.parent)+"/datasets/"
-    project_name = "dataset1_cleanDish"
+    project_name = "dataset_package_test"
 
 
 # Thread button: [lock or nor, servo or not, record or not]
@@ -126,7 +126,7 @@ def main(args):
     # camera init
     camera_dict = load_ini_data_camera()
     rs1 = RealSenseCamera(flip=True, device_id=camera_dict["top"])
-    rs2 = RealSenseCamera(flip=True, device_id=camera_dict["left"])
+    rs2 = RealSenseCamera(flip=False, device_id=camera_dict["left"])
     rs3 = RealSenseCamera(flip=True, device_id=camera_dict["right"])
     thread_cam_left = threading.Thread(target=run_thread_cam, args=(rs1, 0))
     thread_cam_right = threading.Thread(target=run_thread_cam, args=(rs2, 1))
@@ -154,6 +154,7 @@ def main(args):
     env.set_do_status([3, 0])
     robot_pose_init(env)
     start_servo = False
+    curr_light = "dark"
     print("robot init success....")
 
     # button status init
@@ -191,7 +192,9 @@ def main(args):
                     if what_to_do[i, 1]:
                         agent.set_torque(i, False)
             start_servo = True
-            set_light(env, "yellow", 1)
+            obs = env.get_obs()
+            if curr_light != "green":
+                curr_light = set_light(env, "yellow", 1)
 
         if dev_what_to_do[0, 1] == -1 or dev_what_to_do[1, 1] == -1:
             flag_in = np.array([what_to_do[0, 1], what_to_do[1, 1]])
@@ -250,10 +253,10 @@ def main(args):
             # ×××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××××
 
             # button B: recording or not
-            if dev_what_to_do[0, 2]==1:
-                set_light(env, "green", 1)
-            elif dev_what_to_do[0, 2]==-1:
-                set_light(env, "yellow", 1)
+            if dev_what_to_do[0, 2] == 1:
+                curr_light = set_light(env, "green", 1)
+            elif dev_what_to_do[0, 2] == -1:
+                curr_light = set_light(env, "yellow", 1)
             if what_to_do[0, 2] == 1:
                 idx += 1
                 left_dir = save_dir + f"/{dt_time[0]}/leftImg/"
@@ -261,22 +264,23 @@ def main(args):
                 top_dir = save_dir + f"/{dt_time[0]}/topImg/"
                 mk_dir(right_dir)
                 mk_dir(top_dir)
-                if mk_dir(left_dir) :
+                if mk_dir(left_dir):
                     idx = 0
-                np.save(left_dir + f"{idx}.npy", npy_list[0][:npy_len_list[0]])
-                np.save(right_dir + f"{idx}.npy", npy_list[1][:npy_len_list[1]])
-                np.save(top_dir + f"{idx}.npy", npy_list[2][:npy_len_list[2]])
+                cv2.imwrite(top_dir + f"{idx}.jpg", img_list[0])
+                cv2.imwrite(left_dir + f"{idx}.jpg", img_list[1])
+                cv2.imwrite(right_dir + f"{idx}.jpg", img_list[2])
 
-            obs = env.step(action, flag_in)
-
-            if what_to_do[0, 2] == 1:
                 obs_dir = save_dir + f"/{dt_time[0]}/observation/"
                 mk_dir(obs_dir)
                 save_frame(obs_dir, idx, obs, action)
+
+            obs = env.step(action, flag_in)
+            obs["joint_positions"][6] = action[6]
+            obs["joint_positions"][13] = action[13]
             last_action = action
         else:
             start_servo = False
-            set_light(env, "yellow", 0)
+            set_light(env, "green", 0)
 
         # img show
         if args.show_img:

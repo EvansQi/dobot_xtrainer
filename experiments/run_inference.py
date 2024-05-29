@@ -18,7 +18,7 @@ from ModelTrain.module.model_module import Imitate_Model
 class Args:
     robot_port: int = 6001
     hostname: str = "127.0.0.1"
-    show_img: bool = False
+    show_img: bool = True
 
 image_left,image_right,image_top,thread_run=None,None,None,None
 lock = threading.Lock()
@@ -51,9 +51,9 @@ def main(args):
    # camera init
     global image_left, image_right, image_top, thread_run
     thread_run=True
-    rs1 = RealSenseCamera(flip=True, device_id="218622275674")
-    rs2 = RealSenseCamera(flip=False, device_id="218622275344")
-    rs3 = RealSenseCamera(flip=True, device_id="230322276936")
+    rs1 = RealSenseCamera(flip=False, device_id="130322270390")
+    rs2 = RealSenseCamera(flip=True, device_id="130322272313")
+    rs3 = RealSenseCamera(flip=True, device_id="130322272737")
     # rs1 = RealSenseCamera(flip=True, device_id="130322273839")
     # rs2 = RealSenseCamera(flip=False, device_id="130322272591")
     # rs3 = RealSenseCamera(flip=True, device_id="130322272429")
@@ -100,12 +100,12 @@ def main(args):
     # Initialize the model
     model_name = 'policy_last.ckpt'
     # model_name = 'policy_best.ckpt'
-    model = Imitate_Model(ckpt_dir='./ckpt/ckpt_move_cube_new', ckpt_name=model_name)
+    model = Imitate_Model(ckpt_dir='./ckpt/dataset_package_new_c100', ckpt_name=model_name)
     model.loadModel()
     print("model init success...")
 
     # Initialize the parameters
-    episode_len = 900  # The total number of steps to complete the task. Note that it must be less than or equal to parameter 'episode_len' of the corresponding task in file 'ModelTrain.constants'
+    episode_len = 700  # The total number of steps to complete the task. Note that it must be less than or equal to parameter 'episode_len' of the corresponding task in file 'ModelTrain.constants'
     t=0
     last_time = 0
     observation = {'qpos': [], 'images': {'left_wrist': [], 'right_wrist': [], 'top': []}}
@@ -161,7 +161,7 @@ def main(args):
             key = cv2.waitKey(0)
             # 检查按键
             if key == ord('y') or key == ord('Y') :  # If press the 'Y' key
-                cv2.destroyWindows("waitKey")
+                cv2.destroyWindow("waitKey")
                 # go to the position slowly
                 max_delta = (np.abs(last_action - action)).max()
                 steps = min(int(max_delta / 0.001), 100)

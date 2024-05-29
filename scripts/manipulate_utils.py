@@ -21,6 +21,7 @@ def set_light(env, which_color, which_status):
         env.set_do_status([3, which_status])
         env.set_do_status([2, 0])
         env.set_do_status([1, 0])
+    return which_color
 
 def load_ini_data_camera():
     camera_dict = {"top": None, "left": None, "right": None}
@@ -142,7 +143,7 @@ def pose_check(env, agent, flag_in):
     start_pos = agent.act(env.get_obs())
     obs = env.get_obs()
     joints = obs["joint_positions"]
-    err_pose_check, action_return = servo_action_check(start_pos, joints, flag_in)
+    err_pose_check, action_return = servo_action_check(start_pos, joints, flag_in, 0.6)
     if err_pose_check:
         return 1, action_return
     else:
@@ -156,7 +157,12 @@ def dynamic_approach(env, agent, flag_in):
     joints = obs["joint_positions"]
     # log_write(__file__, "joints: " + str(joints))
     # log_write(__file__, "action1: " + str(action1))
-    abs_deltas = max(np.abs(action1 - joints))
+    if flag_in[0] and not flag_in[1]:
+        abs_deltas = max(np.abs(action1[:6] - joints[:6]))
+    elif not flag_in[0] and flag_in[1]:
+        abs_deltas = max(np.abs(action1[7:13] - joints[7:13]))
+    else:
+        abs_deltas = max(np.abs(action1 - joints))
     # log_write(__file__,  "abs_deltas: " + str(abs_deltas))
     steps = int(abs_deltas / 0.01)
     # log_write(__file__, "steps: " + str(steps))
@@ -173,9 +179,8 @@ def dynamic_approach(env, agent, flag_in):
 
 
 if __name__ == "__main__":
-    action = np.array([1.0+2*np.pi+0.2, 1, 1, 1, 1, 1, 1,
-                    1, 1.0, 1, 1, 1, 1, 1])
-    action_last = np.array([1.0, 1, 1, 1, 1, 1, 1,
-                    1, 1.0+2*np.pi+0.2, 1, 1, 1, 1, 1])
-    err, action = servo_action_check(action, action_last, [1, 1])
-    print(action)
+    action = [-1.44164974,  0.13345643, -2.07741816,  0.59677646, 1.60714534,  1.91935946,
+               0.99817288,  0.95174802,  1.03044725,  1.90838818, -0.36576736, -1.41200051, -2.05291206,  1.]
+
+    print(action[7:13])
+    print(np.rad2deg(0.6))

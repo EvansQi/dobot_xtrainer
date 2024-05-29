@@ -205,6 +205,20 @@ class DobotApi:
         self.close()
 
 
+class DobotApiStatus(DobotApi):
+    def get_error(self):
+        data = bytes()
+        hasRead = 0
+        while hasRead < 1440:
+            temp = self.socket_dobot.recv(1440 - hasRead)
+            if len(temp) > 0:
+                hasRead += len(temp)
+                data += temp
+        hasRead = 0
+        feedInfo = np.frombuffer(data, dtype=MyType)
+        return feedInfo['error_status'][0]
+
+
 class DobotApiDashboard(DobotApi):
     """
     Define class dobot_api_dashboard to establish a connection to Dobot
@@ -845,10 +859,10 @@ class DobotApiMove(DobotApi):
         Dynamic follow command based on joint space
         j1~j6:Point position values on each joint
 
-        �	�p:tlookahead_timegain
-        t float �M��L��,ؤ0.1,UM:s  �<�:[0.02,3600.0]
-        lookahead_time   float \({<�PID�Dy,ؤ50,�,�UM �<�:[20.0,100.0]
-        gain float   �Mn�ԋ>'h,\({<�PID�Py,  ؤ500,�,�UM   �<�:[200.0,1000.0]
+        �?�p:tlookahead_timegain
+        t float �M��L��,ؤ0.1,UM:s  �?�?[0.02,3600.0]
+        lookahead_time   float \({<�PID�Dy,ؤ50,�?�UM �?�?[20.0,100.0]
+        gain float   �?Mn��?'h,\({<�PID�Py,  ؤ500,�?�UM   �?�?[200.0,1000.0]
         """
         string = "ServoJ({:f},{:f},{:f},{:f},{:f},{:f},{:f},gain=500)".format(
             j1, j2, j3, j4, j5, j6, t)
@@ -858,7 +872,7 @@ class DobotApiMove(DobotApi):
 
     def ServoJS(self, j1, j2, j3, j4, j5, j6):
         """
-        ��:��s�z�ߏШ
+        ��:��s�z�?ߏШ
         <:ServoJS(J1,J2,J3,J4,J5,J6)
         """
         string = "ServoJS({:f},{:f},{:f},{:f},{:f},{:f})".format(
