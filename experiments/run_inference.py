@@ -21,7 +21,7 @@ from ModelTrain.module.model_module import Imitate_Model
 class Args:
     robot_port: int = 6001
     hostname: str = "127.0.0.1"
-    show_img: bool = False
+    show_img: bool = True
 
 image_left,image_right,image_top,thread_run=None,None,None,None
 lock = threading.Lock()
