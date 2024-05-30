@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import numpy as np
 import tyro
 import threading
+import queue
 from dobot_control.env import RobotEnv
 from dobot_control.robots.robot_node import ZMQClientRobot
 from dobot_control.cameras.realsense_camera import RealSenseCamera
@@ -24,26 +25,21 @@ class Args:
 
 image_left,image_right,image_top,thread_run=None,None,None,None
 lock = threading.Lock()
+
 def run_thread_cam(rs_cam, which_cam):
     global image_left, image_right, image_top, thread_run
     if which_cam==0:
         while thread_run:
-            time.sleep(0.002)
-            with lock:
-                image_left, _ = rs_cam.read()
-                image_left = image_left[:, :, ::-1]
+            image_left, _ = rs_cam.read()
+            image_left = image_left[:, :, ::-1]
     elif which_cam==1:
         while thread_run:
-            time.sleep(0.002)
-            with lock:
-                image_right, _ = rs_cam.read()
-                image_right = image_right[:, :, ::-1]
+            image_right, _ = rs_cam.read()
+            image_right = image_right[:, :, ::-1]
     elif which_cam==2:
         while thread_run:
-            time.sleep(0.002)
-            with lock:
-                image_top, _ = rs_cam.read()
-                image_top = image_top[:, :, ::-1]
+            image_top, _ = rs_cam.read()
+            image_top = image_top[:, :, ::-1]
     else:
         print("Camera index error! ")
 
@@ -102,12 +98,12 @@ def main(args):
     # Initialize the model
     model_name = 'policy_last.ckpt'
     # model_name = 'policy_best.ckpt'
-    model = Imitate_Model(ckpt_dir='./ckpt/dataset_package_new_c100', ckpt_name=model_name)
+    model = Imitate_Model(ckpt_dir='./ckpt/ckpt_move_cube_new', ckpt_name=model_name)
     model.loadModel()
     print("model init success...")
 
     # Initialize the parameters
-    episode_len = 700  # The total number of steps to complete the task. Note that it must be less than or equal to parameter 'episode_len' of the corresponding task in file 'ModelTrain.constants'
+    episode_len = 900  # The total number of steps to complete the task. Note that it must be less than or equal to parameter 'episode_len' of the corresponding task in file 'ModelTrain.constants'
     t=0
     last_time = 0
     observation = {'qpos': [], 'images': {'left_wrist': [], 'right_wrist': [], 'top': []}}
@@ -123,27 +119,27 @@ def main(args):
     while t < episode_len:
         # Obtain the current images
         time0 = time.time()
-        with lock:
-            observation['images']['left_wrist'] = image_left
-            observation['images']['right_wrist'] = image_right
-            observation['images']['top'] = image_top
-            if args.show_img:
-                imgs = np.hstack((observation['images']['left_wrist'],observation['images']['right_wrist'],observation['images']['top']))
-                cv2.imshow("imgs",imgs)
-                cv2.waitKey(1)
-            time1 = time.time()
-            print("read images time(ms)：",(time1-time0)*1000)
+        # with lock:
+        observation['images']['left_wrist'] = image_left
+        observation['images']['right_wrist'] = image_right
+        observation['images']['top'] = image_top
+        if args.show_img:
+            imgs = np.hstack((observation['images']['left_wrist'],observation['images']['right_wrist'],observation['images']['top']))
+            cv2.imshow("imgs",imgs)
+            cv2.waitKey(1)
+        time1 = time.time()
+        print("read images time(ms)：",(time1-time0)*1000)
 
-            # Model inference,output joint value (radian)
-            action = model.predict(observation,t)
-            # print("infer_action:",action)
+        # Model inference,output joint value (radian)
+        action = model.predict(observation,t)
+        # print("infer_action:",action)
         if action[6]>1:
             action[6]=1
-        elif action[6]<0.1:
+        elif action[6]<0:
             action[6] = 0
         if action[13]>1:
             action[13]=1
-        elif action[13]<0.1:
+        elif action[13]<0:
             action[13]=0
         time2 = time.time()
         print("Model inference time(ms)：", (time2 - time1) * 1000)
@@ -185,8 +181,8 @@ def main(args):
         # right arm (jaw tip position) limit:  410>x>-210  -700<Y<-210  z>47;
         t1 = time.time()
         pos = env.get_XYZrxryrz_state()
-        if not ((pos[0] > -410 and pos[0] < 210 and pos[1] > -700 and pos[1] < -210 and pos[2] > 47) and \
-                (pos[6] < 410 and pos[6] > -210 and pos[7] > -700 and pos[7] < -210 and pos[8] > 47)):
+        if not ((pos[0] > -410 and pos[0] < 210 and pos[1] > -700 and pos[1] < -210 and pos[2] > 42) and \
+                (pos[6] < 410 and pos[6] > -210 and pos[7] > -700 and pos[7] < -210 and pos[8] > 42)):
             print("[Warn]:The robot arm XYZ is out of the safe position! ")
             print(pos)
             protect_err = True
