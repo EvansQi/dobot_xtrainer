@@ -157,6 +157,8 @@ def dynamic_approach(env, agent, flag_in):
     joints = obs["joint_positions"]
     # log_write(__file__, "joints: " + str(joints))
     # log_write(__file__, "action1: " + str(action1))
+    joints[6] = action1[6]
+    joints[13] = action1[13]
     if flag_in[0] and not flag_in[1]:
         abs_deltas = max(np.abs(action1[:6] - joints[:6]))
     elif not flag_in[0] and flag_in[1]:
@@ -179,8 +181,9 @@ def dynamic_approach(env, agent, flag_in):
 
 
 if __name__ == "__main__":
-    action = [-1.44164974,  0.13345643, -2.07741816,  0.59677646, 1.60714534,  1.91935946,
-               0.99817288,  0.95174802,  1.03044725,  1.90838818, -0.36576736, -1.41200051, -2.05291206,  1.]
-
-    print(action[7:13])
-    print(np.rad2deg(0.6))
+    print("test")
+    # action = [-1.44164974,  0.13345643, -2.07741816,  0.59677646, 1.60714534,  1.91935946,
+    #            0.99817288,  0.95174802,  1.03044725,  1.90838818, -0.36576736, -1.41200051, -2.05291206,  1.]
+    #
+    # print(action[7:13])
+    # print(np.rad2deg(0.6))
