@@ -18,7 +18,7 @@ from dobot_control.agents.dobot_agent import DobotAgent
 from dobot_control.cameras.realsense_camera import RealSenseCamera
 import datetime
 from pathlib import Path
-
+import sympy as sp
 
 @dataclass
 class Args:
@@ -118,6 +118,127 @@ def run_thread_cam(rs_cam, which_cam):
         npy_len_list[which_cam] = len(image_)
 
 
+
+def dh_transformation_matrix(theta, d, a, alpha):
+    """
+    Create the DH transformation matrix
+    """
+    cos_theta = np.cos(theta)
+    sin_theta = np.sin(theta)
+    cos_alpha = np.cos(alpha)
+    sin_alpha = np.sin(alpha)
+    return np.array([
+        [cos_theta, -sin_theta * cos_alpha, sin_theta * sin_alpha, a * cos_theta],
+        [sin_theta, cos_theta * cos_alpha, -cos_theta * sin_alpha, a * sin_theta],
+        [0, sin_alpha, cos_alpha, d],
+        [0, 0, 0, 1]
+    ])
+
+def claw_width(coef):
+    """
+    Calculate the claw width
+    """
+    claw_servo = 2.3818 - coef * 1.5401
+    cos_claw_servo = sp.cos(claw_servo)
+    claw_wid = sp.symbols("claw_wid")
+    claw_equ = 0.03 ** 2 + claw_wid ** 2 - 0.06 * claw_wid * cos_claw_servo - 0.04 ** 2
+    claw_widths = sp.solve(claw_equ, claw_wid)
+
+    # Return the positive solution
+    return next(sol for sol in claw_widths if sol > 0)
+
+def forward_kinematics(q0, q1, q2, q3, q4, q5, y):
+    """
+    Compute the forward kinematics
+    """
+    dh_params = [
+        (q0, 0.2234, 0, np.pi / 2),
+        (q1 - np.pi / 2, 0, -0.280, 0),
+        (q2, 0, -0.225, 0),
+        (q3 - np.pi / 2, 0.1175, 0, np.pi / 2),
+        (q4, 0.120, 0, -np.pi / 2),
+        (q5, 0.088, 0, 0)
+    ]
+
+    t = np.eye(4)
+    for params in dh_params:
+        t = np.dot(t, dh_transformation_matrix(*params))
+    t_6 = np.eye(4)
+    t_6[:3, 3] = np.array([0, y, 0.2])
+    t_final = np.dot(t, t_6)
+    pos = t_final[:3, 3]
+    return pos
+
+
+def calculate_vel_pos(action, last_action, total_time):
+    """
+    Calculate the deltas for forward kinematics
+    """
+    claw_left = claw_width(action[6])
+    claw_right = claw_width(action[13])
+
+    positions = {}
+    vel = {}
+
+    for side in ['left', 'right']:
+        for paw in ['left', 'right']:
+            coef = 1 if paw == 'left' else -1
+            claw = claw_left if side == 'left' else claw_right
+            claw *= coef
+
+            current_fk = forward_kinematics(*action[0:6] if side == 'left' else action[7:13], claw)
+            last_fk = forward_kinematics(*last_action[0:6] if side == 'left' else last_action[7:13], claw)
+
+            positions[f'{side}_{paw}'] = current_fk
+            vel[f'{side}_{paw}'] = (current_fk - last_fk) / total_time
+
+    return positions, vel
+
+
+def check_protection(positions, vel, what_to_do):
+    protect_err = False
+    warnings = []
+
+    # Unpack positions and deltas
+    t_left_left = positions['left_left']
+    t_left_right = positions['left_right']
+    t_right_left = positions['right_left']
+    t_right_right = positions['right_right']
+
+    delta_left_left = vel['left_left']
+    delta_left_right = vel['left_right']
+    delta_right_left = vel['right_left']
+    delta_right_right = vel['right_right']
+
+    # Z direction protection distance 42 mm
+    if what_to_do[0, 1]:  # The left hand is in sync
+        if t_left_right[2] < 0.044 or t_left_left[2] < 0.044:
+            warnings.append("[Warn]:The left robot out of the safe zone!")
+            warnings.append(f"t_left_right: {t_left_right[2]}, t_left_left: {t_left_left[2]}")
+            protect_err = True
+    if what_to_do[1, 1]:  # The right hand is in sync
+        if t_right_right[2] < 0.042 or t_right_left[2] < 0.042:
+            warnings.append("[Warn]:The right robot out of the safe zone!")
+            warnings.append(f"t_right_right: {t_right_right[2]}, t_right_left: {t_right_left[2]}")
+            protect_err = True
+
+    # Z direction drop velocity -1 m/s
+    if what_to_do[0, 1]:  # The left hand is in sync
+        if delta_left_left[2] < -1 or delta_left_right[2] < -1:
+            warnings.append("[Warn]:The left robot speed of the TCP is moving too fast!")
+            warnings.append(f"delta_left_left: {delta_left_left[2]}")
+            protect_err = True
+    if what_to_do[1, 1]:  # The right hand is in sync
+        if delta_right_left[2] < -1 or delta_right_right[2] < -1:
+            warnings.append("[Warn]:The right robot speed of the TCP is moving too fast!")
+            warnings.append(f"delta_right_left: {delta_right_left[2]}")
+            protect_err = True
+
+    for warning in warnings:
+        print(warning)
+
+    return protect_err
+
 def main(args):
     # create dataset file path
     save_dir = args.save_data_path+args.project_name+"/collect_data"
@@ -206,32 +327,8 @@ def main(args):
 
             # ×××××××××××××××××××××××××××××Security protection×××××××××××××××××××××××××××××××××××××××××××
             # [Note]: Modify the protection parameters in this section carefully !
-            # J2, J3 speed limit to prevent falling: 2 rad/s
-            protect_err = False
-            delta = np.abs(action - last_action) / total_time
-            if what_to_do[0, 1]:  # The left hand is in sync
-                if max(delta[1:3]) > 2:
-                    print("[Warn]:The left robot speed of the joint is moving too fast!")
-                    print(delta)
-                    protect_err = True
-                # Left arm joint angle limitations:  -150<J3<0    J4>-45  (Note: This angle needs to be converted to radians)
-                if not (action[2] > -2.6 and action[2] < 0 and action[3] > -0.78):
-                    print("[Warn]:The J3 or J4 joints of the robotic arm are out of the safe position! ")
-                    print(action)
-                    print(last_action)
-                    protect_err = True
-
-            if what_to_do[1, 1]:  # The right hand is in sync
-                if max(delta[8:10]) > 2:
-                    print("[Warn]:The right robot speed of the joint is moving too fast!")
-                    print(delta)
-                    protect_err = True
-                # right arm joint angle limitations:  150>J3>0    J4<45   (Note: This angle needs to be converted to radians)
-                if not (action[9] < 2.6 and action[9] > 0 and action[10] < 0.78):
-                    print("[Warn]:The J3 or J4 joints of the robotic arm are out of the safe position! ")
-                    print(action)
-                    print(last_action)
-                    protect_err = True
+            positions, vel = calculate_vel_pos(action, last_action, total_time)
+            protect_err = check_protection(positions, vel, what_to_do)
 
             # left arm (jaw tip position) limit:  210>x>-410  -700<Y<-210  z>47;
             # right arm (jaw tip position) limit:  410>x>-210  -700<Y<-210  z>47;
