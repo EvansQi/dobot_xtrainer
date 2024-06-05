@@ -163,9 +163,9 @@ def forward_kinematics(q0, q1, q2, q3, q4, q5, y):
     t = np.eye(4)
     for params in dh_params:
         t = np.dot(t, dh_transformation_matrix(*params))
-    t_6 = np.eye(4)
-    t_6[:3, 3] = np.array([0, y, 0.2])
-    t_final = np.dot(t, t_6)
+    t_tool = np.eye(4)
+    t_tool[:3, 3] = np.array([0, y, 0.2])
+    t_final = np.dot(t, t_tool)
     pos = t_final[:3, 3]
     return pos
 
