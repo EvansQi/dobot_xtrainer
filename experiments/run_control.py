@@ -18,7 +18,6 @@ from dobot_control.agents.dobot_agent import DobotAgent
 from dobot_control.cameras.realsense_camera import RealSenseCamera
 import datetime
 from pathlib import Path
-import sympy as sp
 
 @dataclass
 class Args:
@@ -261,6 +260,7 @@ def check_pose_protection(positions, vel, what_to_do):
     return protect_err
 
 def check_joint_safety(action):
+    protect_err = False
     if not (action[2] > -2.6 and action[2] < 0 and action[3] > -0.78):
         print("[Warn]:The J3 or J4 joints of the robotic arm are out of the safe position! ")
         print(action)
