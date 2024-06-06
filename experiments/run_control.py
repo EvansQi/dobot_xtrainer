@@ -139,13 +139,9 @@ def claw_width(coef):
     Calculate the claw width
     """
     claw_servo = 2.3818 - coef * 1.5401
-    cos_claw_servo = sp.cos(claw_servo)
-    claw_wid = sp.symbols("claw_wid")
-    claw_equ = 0.03 ** 2 + claw_wid ** 2 - 0.06 * claw_wid * cos_claw_servo - 0.04 ** 2
-    claw_widths = sp.solve(claw_equ, claw_wid)
-
-    # Return the positive solution
-    return next(sol for sol in claw_widths if sol > 0)
+    cos_claw_servo = np.cos(claw_servo)
+    claw_wid = 0.03 * cos_claw_servo + 0.5 * np.sqrt(0.0036 * cos_claw_servo ** 2 + 0.0028)
+    return claw_wid
 
 def forward_kinematics(q0, q1, q2, q3, q4, q5, y):
     """
