@@ -194,8 +194,14 @@ def calculate_vel_pos(action, last_action, total_time):
 
     return positions, vel
 
+# 检查位置是否在安全范围内
+def is_within_safe_position(position, x_range, y_range, z_min):
+    return x_range[0] <= position[0] <= x_range[1] and \
+           y_range[0] <= position[1] <= y_range[1] and \
+           position[2] > z_min
 
-def check_protection(positions, vel, what_to_do):
+
+def check_pose_protection(positions, vel, what_to_do):
     protect_err = False
     warnings = []
 
@@ -210,7 +216,7 @@ def check_protection(positions, vel, what_to_do):
     delta_right_left = vel['right_left']
     delta_right_right = vel['right_right']
 
-    # Z direction protection distance 42 mm
+    # Z direction protection distance 44/42 mm
     if what_to_do[0, 1]:  # The left hand is in sync
         if t_left_right[2] < 0.044 or t_left_left[2] < 0.044:
             warnings.append("[Warn]:The left robot out of the safe zone!")
@@ -234,10 +240,41 @@ def check_protection(positions, vel, what_to_do):
             warnings.append(f"delta_right_left: {delta_right_left[2]}")
             protect_err = True
 
+    # 将位置值转换为毫米
+    positions_mm = {key: value * 1000 for key, value in positions.items()}
+    # 定义安全范围
+    # left arm (jaw tip position) limit:  210>x>-410  -700<Y<-210  z>47;
+    # right arm (jaw tip position) limit:  410>x>-210  -700<Y<-210  z>47;
+    x_range_left = (-410, 210)
+    x_range_right = (-210, 410)
+    y_range = (-700, -210)
+    z_min = 47
+
+    # 检查所有位置是否在安全范围内
+    positions_to_check = ['left_left', 'left_right', 'right_left', 'right_right']
+    x_ranges = [x_range_left, x_range_left, x_range_right, x_range_right]
+
+    if not all(is_within_safe_position(positions_mm[pos], x_range, y_range, z_min)
+                  for pos, x_range in zip(positions_to_check, x_ranges)):
+        warnings.append("[Warn]:The robot arm XYZ is out of the safe position! ")
+        protect_err = True
+
     for warning in warnings:
         print(warning)
 
     return protect_err
+
+def check_joint_safety(action):
+    if not (action[2] > -2.6 and action[2] < 0 and action[3] > -0.78):
+        print("[Warn]:The J3 or J4 joints of the robotic arm are out of the safe position! ")
+        print(action)
+        protect_err = True
+    if not (action[9] < 2.6 and action[9] > 0 and action[10] < 0.78):
+        print("[Warn]:The J3 or J4 joints of the robotic arm are out of the safe position! ")
+        print(action)
+        protect_err = True
+    return protect_err
+
 
 def main(args):
     # create dataset file path
@@ -327,23 +364,11 @@ def main(args):
 
             # ×××××××××××××××××××××××××××××Security protection×××××××××××××××××××××××××××××××××××××××××××
             # [Note]: Modify the protection parameters in this section carefully !
+            protect_err = [False, False]
             positions, vel = calculate_vel_pos(action, last_action, total_time)
-            protect_err = check_protection(positions, vel, what_to_do)
-
-            # left arm (jaw tip position) limit:  210>x>-410  -700<Y<-210  z>47;
-            # right arm (jaw tip position) limit:  410>x>-210  -700<Y<-210  z>47;
-            t1 = time.time()
-            pos = env.get_XYZrxryrz_state()
-            print(pos)
-            if not ((pos[0] > -410 and pos[0] < 210 and pos[1] > -700 and pos[1] < -210 and pos[2] > 47) and \
-                    (pos[6] < 410 and pos[6] > -210 and pos[7] > -700 and pos[7] < -210 and pos[8] > 47)):
-                print("[Warn]:The robot arm XYZ is out of the safe position! ")
-                print(pos)
-                protect_err = True
-            t2 = time.time()
-            print("t:", t2 - t1)
-
-            if protect_err:
+            protect_err[0] = check_pose_protection(positions, vel, what_to_do)
+            protect_err[1] = check_joint_safety(action)
+            if any(protect_err):
                 set_light(env, "red", 1)
                 time.sleep(1)
                 exit()
