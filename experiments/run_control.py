@@ -189,7 +189,7 @@ def calculate_vel_pos(action, last_action, total_time):
 
     return positions, vel
 
-# Check that the positions is within a safe range
+# Check that the positions is within a safe zone
 def is_within_safe_position(position, x_range, y_range, z_min):
     return x_range[0] <= position[0] <= x_range[1] and \
            y_range[0] <= position[1] <= y_range[1] and \
