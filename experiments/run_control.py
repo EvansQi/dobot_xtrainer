@@ -167,7 +167,7 @@ def forward_kinematics(q0, q1, q2, q3, q4, q5, y):
 
 def calculate_vel_pos(action, last_action, total_time):
     """
-    Calculate the deltas for forward kinematics
+    Calculate the velocity for forward kinematics
     """
     claw_left = claw_width(action[6])
     claw_right = claw_width(action[13])
@@ -189,7 +189,7 @@ def calculate_vel_pos(action, last_action, total_time):
 
     return positions, vel
 
-# 检查位置是否在安全范围内
+# Check that the positions is within a safe range
 def is_within_safe_position(position, x_range, y_range, z_min):
     return x_range[0] <= position[0] <= x_range[1] and \
            y_range[0] <= position[1] <= y_range[1] and \
@@ -235,9 +235,9 @@ def check_pose_protection(positions, vel, what_to_do):
             warnings.append(f"delta_right_left: {delta_right_left[2]}")
             protect_err = True
 
-    # 将位置值转换为毫米
+    # Unit: mm
     positions_mm = {key: value * 1000 for key, value in positions.items()}
-    # 定义安全范围
+    # Define a safe zone
     # left arm (jaw tip position) limit:  210>x>-410  -700<Y<-210  z>47;
     # right arm (jaw tip position) limit:  410>x>-210  -700<Y<-210  z>47;
     x_range_left = (-410, 210)
@@ -245,7 +245,7 @@ def check_pose_protection(positions, vel, what_to_do):
     y_range = (-700, -210)
     z_min = 47
 
-    # 检查所有位置是否在安全范围内
+    # Check that all positions are within safe zone
     positions_to_check = ['left_left', 'left_right', 'right_left', 'right_right']
     x_ranges = [x_range_left, x_range_left, x_range_right, x_range_right]
 
