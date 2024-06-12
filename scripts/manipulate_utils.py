@@ -9,6 +9,7 @@ from scripts.function_util import wait_period, log_write
 
 
 def set_light(env, which_color, which_status):
+    print("light change")
     if which_color == "red":
         env.set_do_status([3, 0])
         env.set_do_status([2, 0])

@@ -163,10 +163,10 @@ class DobotApi:
 
     def send_data(self, string):
         # self.log(f"Send to {self.ip}:{self.port}: {string}")
-        try:
-            self.socket_dobot.send(str.encode(string, 'utf-8'))
-        except Exception as e:
-            print(e)
+        # try:
+        self.socket_dobot.send(str.encode(string, 'utf-8'))
+        # except Exception as e:
+        #     print(e)
 
     def wait_reply(self):
         """
