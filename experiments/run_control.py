@@ -323,6 +323,12 @@ def main(args):
     total_time = 0.04
     while 1:
         tic = time.time()
+
+        # camera thread check
+        assert thread_cam_top.is_alive(), "Error: please check the top camera!"
+        assert thread_cam_left.is_alive(), "Error: please check the left camera!"
+        assert thread_cam_right.is_alive(), "Error: please check the right camera!"
+
         action = agent.act({})
         print(action)
         dev_what_to_do = what_to_do.copy()-last_status
@@ -352,6 +358,8 @@ def main(args):
 
         if dev_what_to_do[0, 1] == -1 or dev_what_to_do[1, 1] == -1:
             flag_in = np.array([what_to_do[0, 1], what_to_do[1, 1]])
+            if what_to_do[0, 1] == 0 and what_to_do[1, 1] == 0:
+                set_light(env, "green", 0)
 
         if (what_to_do[0, 1] or what_to_do[1, 1]) and start_servo:
             action = agent.act({})
@@ -398,7 +406,6 @@ def main(args):
             last_action = action
         else:
             start_servo = False
-            set_light(env, "green", 0)
 
         # img show
         if args.show_img:
