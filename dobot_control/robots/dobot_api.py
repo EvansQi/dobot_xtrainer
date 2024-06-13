@@ -141,15 +141,14 @@ class DobotApi:
         if args:
             self.text_log = args[0]
 
-        if self.port == 29999 or self.port == 30003 or self.port == 30004:
+        if self.port == 29999 or self.port == 30004:
             self.socket_dobot = socket.socket()
             self.socket_dobot.settimeout(3)
-            try:
-                self.socket_dobot.connect((self.ip, self.port))
-            except socket.error:
-                # print(socket.error)
-                raise Exception(
-                    f"Unable to connect to the follower robot arm, IP is  {self.IP} , port is {self.port} ")
+            self.socket_dobot.connect((self.ip, self.port))
+        elif self.port == 30003:
+            self.socket_dobot = socket.socket()
+            self.socket_dobot.settimeout(0.001)
+            self.socket_dobot.connect((self.ip, self.port))
         else:
             raise Exception(
                 f"Connect to dashboard server need use port {self.port} !")
@@ -163,9 +162,14 @@ class DobotApi:
 
     def send_data(self, string):
         # self.log(f"Send to {self.ip}:{self.port}: {string}")
-        # try:
         self.socket_dobot.send(str.encode(string, 'utf-8'))
+        # try:
+        #     self.socket_dobot.send(str.encode(string, 'utf-8'))
         # except Exception as e:
+        #     self.__init__(self.ip, self.port)
+        #     log_write(__file__, str(e))
+        #     self.socket_dobot.send(str.encode(string, 'utf-8'))
+        #     log_write(__file__, str(e))
         #     print(e)
 
     def wait_reply(self):
@@ -866,9 +870,11 @@ class DobotApiMove(DobotApi):
         """
         string = "ServoJ({:f},{:f},{:f},{:f},{:f},{:f},{:f},gain=500)".format(
             j1, j2, j3, j4, j5, j6, t)
-        # log_write(__file__, "servoj: " + string)
-        self.send_data(string)
-        # return self.sendRecvMsg(string)
+        # log_write(__file__, "servoj 1: " + string)
+        aaa = self.sendRecvMsg(string)
+        # log_write(__file__, "servoj return data: " + aaa)
+        # self.send_data(string)
+        # return
 
     def ServoJS(self, j1, j2, j3, j4, j5, j6):
         """

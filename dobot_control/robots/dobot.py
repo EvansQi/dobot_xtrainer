@@ -20,12 +20,13 @@ class DobotRobot(Robot):
         # Set delta time to be used by receiveCallback
         self.delta_time_ = 1 / self.frequency_
         [print("in dobot robot") for _ in range(4)]
-        try:
-            self.robot = dobot_api.DobotApiMove(robot_ip, 30003)  # 运动指令的端�?
-        except Exception as e:
-            print(e)
-            print("Please check that the robot network is connected correctly and make sure TCP/IP mode is turned!")
-            sys.exit()
+        self.robot = dobot_api.DobotApiMove(robot_ip, 30003)  # 运动指令的端�?
+        # try:
+        #     self.robot = dobot_api.DobotApiMove(robot_ip, 30003)  # 运动指令的端�?
+        # except Exception as e:
+        #     print(e)
+        #     print("Please check that the robot network is connected correctly and make sure TCP/IP mode is turned!")
+        #     sys.exit()
         self.robot_ip = robot_ip
         self.r_inter = dobot_api.DobotApiDashboard(robot_ip, 29999)  # 获取信息指令的端�?
         self.r_inter.EnableRobot()  # 上使能机械臂，发送指令前必须执行�?
@@ -224,11 +225,11 @@ class DobotRobot(Robot):
 
 def main():
     dobot = DobotRobot("192.168.5.2", no_gripper=False)
-    # dobot.set_do_status([1, 0])
-    # dobot.set_do_status([2, 0])
-    # dobot.set_do_status([3, 0])
-    while 1:
-        dobot.get_joint_state()
+    dobot.set_do_status([1, 0])
+    dobot.set_do_status([2, 0])
+    dobot.set_do_status([3, 0])
+    # while 1:
+    #     dobot.get_joint_state()
     # dobot = DobotRobot("192.168.5.2", no_gripper=False)
     # set_light(dobot, "red", 0)
 
