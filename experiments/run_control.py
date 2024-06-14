@@ -365,9 +365,9 @@ def main(args):
             if (safe_limit < 1):
                 safe_limit = safe_limit + 1
             else:
-            positions, vel = calculate_vel_pos(action, last_action, total_time)
-            protect_err[0] = check_pose_protection(positions, vel, what_to_do)
-            protect_err[1] = check_joint_safety(action)
+                positions, vel = calculate_vel_pos(action, last_action, total_time)
+                protect_err[0] = check_pose_protection(positions, vel, what_to_do)
+                protect_err[1] = check_joint_safety(action)
             if any(protect_err):
                 set_light(env, "red", 1)
                 time.sleep(1)
