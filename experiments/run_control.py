@@ -205,36 +205,45 @@ def check_pose_protection(positions, vel, what_to_do):
     delta_right_left = vel['right_left']
     delta_right_right = vel['right_right']
 
-    # Z direction drop velocity -1 m/s
+    positions_mm = {key: value * 1000 for key, value in positions.items()}
+    # Define a safe zone
+    # left arm (jaw tip position) limit:  290>x>-450  -750<Y<-160  z>44;
+    # right arm (jaw tip position) limit:  450>x>-290  -750<Y<-160  z>42;
+    x_range_left = (-450, 290)
+    x_range_right = (-290, 450)
+    y_range = (-750, -160)
+    z_range_left = 44
+    z_range_right = 42
+
     if what_to_do[0, 1]:  # The left hand is in sync
+        # Z direction speed limit -1 m/s
         if delta_left_left[2] < -1 or delta_left_right[2] < -1:
             warnings.append("[Warn]:The left robot speed of the TCP is moving too fast!")
             warnings.append(f"delta_left_left: {delta_left_left[2]}")
             protect_err = True
+        # Left arm working space limitation
+        positions_to_check = ['left_left', 'left_right']
+        x_ranges = [x_range_left, x_range_left]
+        z_ranges = [z_range_left, z_range_left]
+        if not all(is_within_safe_position(positions_mm[pos], x_range, y_range, z_range)
+                   for pos, x_range, z_range in zip(positions_to_check, x_ranges, z_ranges)):
+            warnings.append("[Warn]:The left arm is out of the safe zone!")
+            protect_err = True
+
     if what_to_do[1, 1]:  # The right hand is in sync
+        # Z direction speed limit -1 m/s
         if delta_right_left[2] < -1 or delta_right_right[2] < -1:
             warnings.append("[Warn]:The right robot speed of the TCP is moving too fast!")
             warnings.append(f"delta_right_left: {delta_right_left[2]}")
             protect_err = True
-
-    # Unit: mm
-    positions_mm = {key: value * 1000 for key, value in positions.items()}
-    # Define a safe zone
-    # left arm (jaw tip position) limit:  210>x>-410  -700<Y<-210  z>44;
-    # right arm (jaw tip position) limit:  410>x>-210  -700<Y<-210  z>42;
-    x_range_left = (-410, 210)
-    x_range_right = (-210, 410)
-    y_range = (-700, -210)
-    z_range_left = 44
-    z_range_right = 42
-    # Check that all positions are within safe zone
-    positions_to_check = ['left_left', 'left_right', 'right_left', 'right_right']
-    x_ranges = [x_range_left, x_range_left, x_range_right, x_range_right]
-    z_ranges = [z_range_left, z_range_left, z_range_right,z_range_right]
-    if not all(is_within_safe_position(positions_mm[pos], x_range, y_range, z_range)
-                  for pos, x_range, z_range in zip(positions_to_check, x_ranges, z_ranges)):
-        warnings.append("[Warn]:The robot arm XYZ is out of the safe position! ")
-        protect_err = True
+        # Right arm working space limitation
+        positions_to_check = ['right_left', 'right_right']
+        x_ranges = [x_range_right, x_range_right]
+        z_ranges = [z_range_right, z_range_right]
+        if not all(is_within_safe_position(positions_mm[pos], x_range, y_range, z_range)
+                   for pos, x_range, z_range in zip(positions_to_check, x_ranges, z_ranges)):
+            warnings.append("[Warn]:The right arm is out of the safe zone!")
+            protect_err = True
 
     for warning in warnings:
         print(warning)
@@ -243,12 +252,12 @@ def check_pose_protection(positions, vel, what_to_do):
 
 def check_joint_safety(action):
     protect_err = False
-    if not (action[2] > -2.6 and action[2] < 0 and action[3] > -0.78):
-        print("[Warn]:The J3 or J4 joints of the robotic arm are out of the safe position! ")
+    if not (action[2] < 0):
+        print("[Warn]:The J3 joints of the robotic arm are out of the safe position! ")
         print(action)
         protect_err = True
-    if not (action[9] < 2.6 and action[9] > 0 and action[10] < 0.78):
-        print("[Warn]:The J3 or J4 joints of the robotic arm are out of the safe position! ")
+    if not (action[9] > 0):
+        print("[Warn]:The J3 joints of the robotic arm are out of the safe position! ")
         print(action)
         protect_err = True
     return protect_err
@@ -302,7 +311,9 @@ def main(args):
 
     print("-------------------------Ok, let's start------------------------")
     idx = 0
+    safe_limit = 0
     total_time = 0.04
+
     while 1:
         tic = time.time()
 
@@ -351,6 +362,9 @@ def main(args):
             # ×××××××××××××××××××××××××××××Security protection×××××××××××××××××××××××××××××××××××××××××××
             # [Note]: Modify the protection parameters in this section carefully !
             protect_err = [False, False]
+            if (safe_limit < 1):
+                safe_limit = safe_limit + 1
+            else:
             positions, vel = calculate_vel_pos(action, last_action, total_time)
             protect_err[0] = check_pose_protection(positions, vel, what_to_do)
             protect_err[1] = check_joint_safety(action)
@@ -388,6 +402,7 @@ def main(args):
             last_action = action
         else:
             start_servo = False
+            safe_limit = 0
 
         # img show
         if args.show_img:
