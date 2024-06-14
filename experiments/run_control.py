@@ -200,28 +200,10 @@ def check_pose_protection(positions, vel, what_to_do):
     protect_err = False
     warnings = []
 
-    # Unpack positions and deltas
-    t_left_left = positions['left_left']
-    t_left_right = positions['left_right']
-    t_right_left = positions['right_left']
-    t_right_right = positions['right_right']
-
     delta_left_left = vel['left_left']
     delta_left_right = vel['left_right']
     delta_right_left = vel['right_left']
     delta_right_right = vel['right_right']
-
-    # Z direction protection distance 44/42 mm
-    if what_to_do[0, 1]:  # The left hand is in sync
-        if t_left_right[2] < 0.044 or t_left_left[2] < 0.044:
-            warnings.append("[Warn]:The left robot out of the safe zone!")
-            warnings.append(f"t_left_right: {t_left_right[2]}, t_left_left: {t_left_left[2]}")
-            protect_err = True
-    if what_to_do[1, 1]:  # The right hand is in sync
-        if t_right_right[2] < 0.042 or t_right_left[2] < 0.042:
-            warnings.append("[Warn]:The right robot out of the safe zone!")
-            warnings.append(f"t_right_right: {t_right_right[2]}, t_right_left: {t_right_left[2]}")
-            protect_err = True
 
     # Z direction drop velocity -1 m/s
     if what_to_do[0, 1]:  # The left hand is in sync
@@ -238,19 +220,19 @@ def check_pose_protection(positions, vel, what_to_do):
     # Unit: mm
     positions_mm = {key: value * 1000 for key, value in positions.items()}
     # Define a safe zone
-    # left arm (jaw tip position) limit:  210>x>-410  -700<Y<-210  z>47;
-    # right arm (jaw tip position) limit:  410>x>-210  -700<Y<-210  z>47;
+    # left arm (jaw tip position) limit:  210>x>-410  -700<Y<-210  z>44;
+    # right arm (jaw tip position) limit:  410>x>-210  -700<Y<-210  z>42;
     x_range_left = (-410, 210)
     x_range_right = (-210, 410)
     y_range = (-700, -210)
-    z_min = 47
-
+    z_range_left = 44
+    z_range_right = 42
     # Check that all positions are within safe zone
     positions_to_check = ['left_left', 'left_right', 'right_left', 'right_right']
     x_ranges = [x_range_left, x_range_left, x_range_right, x_range_right]
-
-    if not all(is_within_safe_position(positions_mm[pos], x_range, y_range, z_min)
-                  for pos, x_range in zip(positions_to_check, x_ranges)):
+    z_ranges = [z_range_left, z_range_left, z_range_right,z_range_right]
+    if not all(is_within_safe_position(positions_mm[pos], x_range, y_range, z_range)
+                  for pos, x_range, z_range in zip(positions_to_check, x_ranges, z_ranges)):
         warnings.append("[Warn]:The robot arm XYZ is out of the safe position! ")
         protect_err = True
 
