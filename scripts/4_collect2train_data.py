@@ -1,7 +1,6 @@
 import time
 import h5py
 import os
-from constants import PUPPET_GRIPPER_POSITION_NORMALIZE_FN, SIM_TASK_CONFIGS, DT
 import glob
 import cv2
 import pickle
@@ -54,8 +53,8 @@ def deal_data(pos_list, top_list, left_list, right_list):
     return pos_list, top_list, left_list, right_list
 
 
-def load_data(args, one_dataset_dir):
-    camera_names = SIM_TASK_CONFIGS[args.task_name]['camera_names']
+def load_data(one_dataset_dir):
+    camera_names = ['top', 'left_wrist', 'right_wrist']
     print(camera_names)
 
     data_pose_list = glob.glob(one_dataset_dir + 'observation/*.pkl')
@@ -125,7 +124,7 @@ def main(args):
         print("dealing with : ", idx)
         one_data_dir = dataset_dir+all_data_dir[idx]+"/"
         print(one_data_dir)
-        qpos, qvel, action, base_action, image_dict, is_sim = load_data(args, one_data_dir)
+        qpos, qvel, action, base_action, image_dict, is_sim = load_data(one_data_dir)
         qpos = np.concatenate([qpos[:, :7] * MIRROR_STATE_MULTIPLY, qpos[:, 7:] * MIRROR_STATE_MULTIPLY], axis=1)
         qvel = np.concatenate([qvel[:, :7] * MIRROR_STATE_MULTIPLY, qvel[:, 7:] * MIRROR_STATE_MULTIPLY], axis=1)
         action = np.concatenate([action[:, :7] * MIRROR_STATE_MULTIPLY, action[:, 7:] * MIRROR_STATE_MULTIPLY], axis=1)
@@ -228,7 +227,7 @@ def main(args):
         print(f'Saving {dataset_path}: {time.time() - t0:.1f} secs\n')
 
         # if idx in [0, 4, 8, 23, 33]:
-        save_videos(image_dict, DT, video_path=os.path.join(output_video_dir + f'{all_data_dir[idx]}_video.mp4'))
+        save_videos(image_dict, 0.02, video_path=os.path.join(output_video_dir + f'{all_data_dir[idx]}_video.mp4'))
 
 
 if __name__ == "__main__":
