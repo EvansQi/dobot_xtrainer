@@ -52,4 +52,6 @@ if __name__ == "__main__":
                 print("***WARNING***: ", warnings)
                 continue
 
+    assert not len(port_list), f"Error: find port error ({port_list})"
     print("other port: ", port_list)
+
