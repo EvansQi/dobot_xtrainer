@@ -7,7 +7,7 @@ def arg_config():
     parser.add_argument('--task_name', action='store', type=str, default='move_cube_new',help='task_name', required=False)
     parser.add_argument('--batch_size', action='store', type=int, help='batch_size', default=16, required=False)
     parser.add_argument('--seed', action='store', type=int, help='seed', default=0,required=False)
-    parser.add_argument('--num_steps', action='store', type=int, help='num_steps', default=10000, required=False)
+    parser.add_argument('--num_steps', action='store', type=int, help='num_steps', default=30000, required=False)
     parser.add_argument('--lr', action='store', type=float, help='lr', default=2e-5,required=False)
     parser.add_argument('--load_pretrain', action='store_true', default=False)  # Ignore this parameter and leave the default setting
     parser.add_argument('--eval_every', action='store', type=int, default=100, help='eval_every', required=False)  # Ignore this parameter and leave the default setting
