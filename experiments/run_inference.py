@@ -157,7 +157,7 @@ def main(args):
             temp_img = np.zeros(shape=(640, 480))
             cv2.imshow("waitKey", temp_img)  # Make cv2.waitkey(0) work
             key = cv2.waitKey(0)
-            # 检查按键
+            # Check the keys
             if key == ord('y') or key == ord('Y') :  # If press the 'Y' key
                 cv2.destroyWindow("waitKey")
                 # go to the position slowly
@@ -165,6 +165,7 @@ def main(args):
                 steps = min(int(max_delta / 0.001), 100)
                 for jnt in np.linspace(last_action, action, steps):
                     env.step(jnt,np.array([1,1]))
+                first = False
             else:
                 protect_err = True
                 cv2.destroyAllWindows()
