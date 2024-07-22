@@ -10,7 +10,7 @@ print(f"Found {len(device_ids)} devices: ", device_ids)
 
 camera_dict = load_ini_data_camera()
 rs_list = [RealSenseCamera(flip=True, device_id=camera_dict["top"]),
-           RealSenseCamera(flip=True, device_id=camera_dict["left"]),
+           RealSenseCamera(flip=False, device_id=camera_dict["left"]),
            RealSenseCamera(flip=True, device_id=camera_dict["right"])]
 show_canvas = np.zeros((480, 640*3, 3), dtype=np.uint8)
 

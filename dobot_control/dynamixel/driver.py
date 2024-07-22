@@ -99,7 +99,7 @@ class FakeDynamixelDriver(DynamixelDriverProtocol):
 
 class DynamixelDriver(DynamixelDriverProtocol):
     def __init__(
-        self, ids: Sequence[int], append_id: int, port: str = "/dev/ttyUSB0", baudrate: int = 1000000
+        self, ids: Sequence[int], append_id: int, port: str = "/dev/ttyUSB0", baudrate: int = 1000000, using_sensor = False
     ):
 
         """Initialize the DynamixelDriver class.
@@ -111,8 +111,9 @@ class DynamixelDriver(DynamixelDriverProtocol):
         """
         self._ids = ids
         self._append_id = append_id
+        self.using_sensor = using_sensor
         self._joint_angles = None
-        self._joint_keys = np.zeros(2)  # add 2 keys
+        self._joint_keys = np.zeros(3)  # add 2 keys
         self._lock = Lock()
 
         # Initialize the port handler, packet handler, and group sync read/write
@@ -156,20 +157,24 @@ class DynamixelDriver(DynamixelDriverProtocol):
     def _internal_getKey(self) :
         txBuf = [0xAA,0x55,0xAA]
         self._portHandler.writePort(txBuf)
-        self._portHandler.setPacketTimeout(6)
+        self._portHandler.setPacketTimeout(4)
         rxpacket = []
-        waitLen = 2
+        waitLen = 4
         while True:
-            rxpacket.extend(self._portHandler.readPort(2))
+            rxpacket.extend(self._portHandler.readPort(4))
             rx_length = len(rxpacket)
             if rx_length >= waitLen :
                 break
             if self._portHandler.isPacketTimeout():
                 break
-        if len(rxpacket) == 2 and \
-            rxpacket[0] | rxpacket[1] == 0xff and \
-            rxpacket[0] & rxpacket[1] == 0x00 :
-            return  [(rxpacket[0]  >> 4) & 0b1111,rxpacket[0] & 0b00001111 ]
+        # print(rxpacket)
+        if len(rxpacket) == 4 and\
+            ((rxpacket[0] + rxpacket[1] + rxpacket[2] + rxpacket[3]) == 255*2 ):
+            # rxpacket[0] + rxpacket[1] = 255 rxpacket[2] + rxpacket[3] = 255
+            if self.using_sensor:
+                return [(rxpacket[0]  >> 4) & 0b1111,rxpacket[0] & 0b00001111 ,rxpacket[2]]
+            else:
+                return [(rxpacket[0] >> 4) & 0b1111, rxpacket[0] & 0b00001111, 0]
         return []
 
     def set_joints(self, joint_angles: Sequence[float]):

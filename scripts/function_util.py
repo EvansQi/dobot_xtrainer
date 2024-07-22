@@ -9,6 +9,12 @@ from pathlib import Path
 import configparser
 
 
+def time_print(st):
+    current_time = time.strftime("%Y-%m-%d %H-%M-%S:", time.localtime())
+    print(str(current_time) +
+          str(datetime.datetime.now().strftime("%f")[:-3]) +
+          str(st))
+
 def free_limit_and_set_one(file_name):
     ini_file_path = str(Path(__file__).parent) + "/dobot_config/dobot_settings.ini"
     ini_file = configparser.ConfigParser()
@@ -30,6 +36,8 @@ def scan_port():
     ports = list(serial_stl.comports())
     for i in ports:
         if "USB" in i.device:
+            com_list.append(i.device)
+        if "ACM" in i.device:
             com_list.append(i.device)
     for _port in com_list:
         computer_passwd = ini_file.get("COMPUTER", "passcode")
