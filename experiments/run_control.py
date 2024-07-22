@@ -43,7 +43,7 @@ def button_monitor_realtime(agent):
     start_press_status = np.array(([0, 0], [0, 0]))  # start press
     keys_press_count = np.array(([0, 0, 0], [0, 0, 0]))
 
-    while 1:
+    while not is_falling[0]:
         # time.sleep(0.010)
         now_keys = agent.get_keys()
         dev_keys = now_keys - last_keys_status
