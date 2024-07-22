@@ -16,7 +16,7 @@ class DynamixelRobot():
         joint_offsets: Optional[Sequence[float]] = None,
         joint_signs: Optional[Sequence[int]] = None,
         real: bool = False,
-        # port: str = "/dev/ttyUSB0",
+        using_sensor = False,
         port: str = "COM5",
         baudrate: int = 1000000,
         gripper_config: Optional[Tuple[int, float, float]] = None,
@@ -69,7 +69,8 @@ class DynamixelRobot():
         ), f"joint_signs: {self._joint_signs}"
 
         if real:
-            self._driver = DynamixelDriver(joint_ids, append_id=append_id, port=port, baudrate=baudrate)
+            print("ssssssssssssssssssssss: ", baudrate)
+            self._driver = DynamixelDriver(joint_ids, append_id=append_id, port=port, baudrate=baudrate, using_sensor=using_sensor)
             print(f"successfully connect to port: {port}")
         else:
             self._driver = FakeDynamixelDriver(joint_ids)
