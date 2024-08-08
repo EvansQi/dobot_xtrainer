@@ -34,7 +34,7 @@ class Args:
 # 0: stop recording, 1: recording
 what_to_do = np.array(([0, 0, 0], [0, 0, 0]))
 dt_time = np.array([20240507161455])
-using_sensor = True
+using_sensor = False
 is_falling = np.array([0])
 
 def button_monitor_realtime(agent):
