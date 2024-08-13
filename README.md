@@ -3,6 +3,6 @@
 
   This project is a supporting program for the Dobot dual-arm AI training platform. It can intuitively, flexibly and accurately control the movement of the slave manipulator by directly manipulating the small master hand, and realize reliable, efficient and high-quality demonstration data collection. At the same time, it provides a basic imitation learning data collection, algorithm training and reasoning demonstration code program, as well as the API interface of the whole platform (including master hand joint angle data reading/locking control, slave manipulator joint angle and Cartesian coordinate reading/control, gripper opening and closing control, camera RGB/depth image acquisition, etc.). Through this hardware platform and secondary development interface, flexible and rich robot application research can be realized.
   
-### Third-Party Components
+--Third-Party Components
 
 This project includes components derived from other open-source projects. For detailed information about these components, including license information, please refer to the [THIRD-PARTY-LICENSES] file.
