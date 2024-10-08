@@ -30,3 +30,7 @@ date: 2024/08/8
 
 v1.0.6
 date: 2024/08/13
+
+v1.0.7
+date: 2024/10/08
+Add the firmware version check and the type of robot check
