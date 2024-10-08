@@ -18,6 +18,7 @@ from dobot_control.agents.dobot_agent import DobotAgent
 from dobot_control.cameras.realsense_camera import RealSenseCamera
 import datetime
 from pathlib import Path
+import requests
 
 @dataclass
 class Args:
@@ -271,6 +272,39 @@ def check_joint_safety(action):
         protect_err = True
     return protect_err
 
+def get_firmware_version_satisfied(robot_ip):
+    try:
+        response = requests.post("http://"+robot_ip+":22000/settings/version")
+        if response.status_code == 200:
+            rt_version = response.text.split("{")[1].split("\n\t")[3].split(":")[1].split("\"")[1].split("-")[0].split(".")
+            rt_num = "".join(rt_version)
+            return 1, int(rt_num)
+        else:
+            print("Failed to retrieve the version webpage")
+            return 0, 0
+    except Exception as e:
+        print(e)
+        return 0, 0
+
+def get_robot_type(robot_ip):
+    response = requests.post("http://"+robot_ip+":22000/properties/controllerType")
+    if response.status_code == 200:
+        print("The type of robot is:", eval(response.text)["name"])
+        return eval(response.text)["name"]
+    else:
+        print("Failed to obtain the type of robot")
+        return None
+
+def check_firmware_version():
+    left_version = get_firmware_version_satisfied("192.168.5.1")
+    right_version = get_firmware_version_satisfied("192.168.5.2")
+    if left_version[1] < 3581 or left_version[1]>=4000:
+        print("[ERROR]Left hand error[192.168.5.1]:firmware version requires V3 and must >=3.5.8.1 (found: %s),please check and update"%left_version[1])
+        return False
+    if right_version[1] < 3581 or right_version[1]>=4000:
+        print("[ERROR]Right hand error[192.168.5.1]:firmware version requires V3 and must >=3.5.8.1 (found: {%s}),please check and update"% right_version[1])
+        return False
+    return True
 
 def main(args):
     # create dataset file path
@@ -302,6 +336,9 @@ def main(args):
     print("Waiting to connect the robot...")
     robot_client = ZMQClientRobot(port=args.robot_port, host=args.hostname)
     print("If the robot fails to initialize successfully after 5 seconds,please check that the robot network is connected correctly and make sure TCP/IP mode is turned!")
+    if check_firmware_version()==False:
+        return
+    robot_type = get_robot_type("192.168.5.1")
     env = RobotEnv(robot_client)
     env.set_do_status([1, 0])
     env.set_do_status([2, 0])
@@ -316,7 +353,6 @@ def main(args):
     thread_button = threading.Thread(target=button_monitor_realtime, args=(agent, ))
     thread_button.start()
     print("button thread init success...")
-
 
     print("-------------------------Ok, let's start------------------------")
     idx = 0
