@@ -12,23 +12,26 @@ if __name__ == "__main__":
     assert len(port_list) >= 4, f"At least 4 ports should be detected, but only {len(port_list)} found, please check"
 
     # find hand port
+    baud_rate_list = [2000000, 1000000]
     for which_hand in hands_dict.keys():
         for _port in port_list:
-            try:
-                driver = DynamixelDriver(ids=hands_dict[which_hand].joint_ids,
-                                         append_id=hands_dict[which_hand].append_id,
-                                         port=_port,
-                                         baudrate=hands_dict[which_hand].baud_rate)
-                port_list.remove(_port)
-                print("Success(hand): ", which_hand, _port)
-                ini_file.set(section=which_hand, option="port", value=_port)
-                with open(ini_file_path, "w+") as _file:
-                    ini_file.write(_file)
-                _file.close()
-                break
-            except Exception as e:
-                warnings = e
-                continue
+            for _baud_rate in baud_rate_list:
+                try:
+                    driver = DynamixelDriver(ids=hands_dict[which_hand].joint_ids,
+                                             append_id=hands_dict[which_hand].append_id,
+                                             port=_port,
+                                             baudrate=_baud_rate)
+                    port_list.remove(_port)
+                    print("Success(hand): ", which_hand, _port)
+                    ini_file.set(section=which_hand, option="port", value=_port)
+                    ini_file.set(section=which_hand, option="baud_rate", value=_baud_rate)
+                    with open(ini_file_path, "w+") as _file:
+                        ini_file.write(_file)
+                    _file.close()
+                    break
+                except Exception as e:
+                    warnings = e
+                    continue
 
     # find gripper port
     print("other port: ", port_list)
