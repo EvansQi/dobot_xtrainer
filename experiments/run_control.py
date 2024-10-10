@@ -156,14 +156,25 @@ def forward_kinematics(q0, q1, q2, q3, q4, q5, y):
     """
     Compute the forward kinematics
     """
-    dh_params = [
-        (q0, 0.2234, 0, np.pi / 2),
-        (q1 - np.pi / 2, 0, -0.280, 0),
-        (q2, 0, -0.225, 0),
-        (q3 - np.pi / 2, 0.1175, 0, np.pi / 2),
-        (q4, 0.120, 0, -np.pi / 2),
-        (q5, 0.088, 0, 0)
-    ]
+    robot_type = get_robot_type("192.168.5.1")
+    if robot_type == "Nova 2":
+        dh_params = [
+            (q0, 0.2234, 0, np.pi / 2),
+            (q1 - np.pi / 2, 0, -0.280, 0),
+            (q2, 0, -0.225, 0),
+            (q3 - np.pi / 2, 0.1175, 0, np.pi / 2),
+            (q4, 0.120, 0, -np.pi / 2),
+            (q5, 0.088, 0, 0)
+        ]
+    if robot_type == "Nova 5":
+        dh_params = [
+            (q0, 0.240, 0, np.pi / 2),
+            (q1 - np.pi / 2, 0, -0.400, 0),
+            (q2, 0, -0.330, 0),
+            (q3 - np.pi / 2, 0.135, 0, np.pi / 2),
+            (q4, 0.120, 0, -np.pi / 2),
+            (q5, 0.088, 0, 0)
+        ]
 
     t = np.eye(4)
     for params in dh_params:
