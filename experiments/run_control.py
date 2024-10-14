@@ -35,7 +35,7 @@ class Args:
 # 0: stop recording, 1: recording
 what_to_do = np.array(([0, 0, 0], [0, 0, 0]))
 dt_time = np.array([20240507161455])
-using_sensor = False
+using_sensor_protection = False
 is_falling = np.array([0])
 
 def button_monitor_realtime(agent):
@@ -101,7 +101,7 @@ def button_monitor_realtime(agent):
                     # log_write(__file__, "ButtonB: [" + str(i) + "] stop recording")
 
         # status fall
-        if using_sensor:
+        if using_sensor_protection:
             for i in range(2):
                 if now_keys[i, 2] and what_to_do[i, 0]:  # button a: lock
                     agent.set_torque(2, True)
@@ -339,8 +339,8 @@ def main(args):
 
     # agent init
     _, hands_dict = load_ini_data_hands()
-    left_agent = DobotAgent(which_hand="LEFT", dobot_config=hands_dict["HAND_LEFT"], using_sensor=using_sensor)
-    right_agent = DobotAgent(which_hand="RIGHT", dobot_config=hands_dict["HAND_RIGHT"], using_sensor=using_sensor)
+    left_agent = DobotAgent(which_hand="LEFT", dobot_config=hands_dict["HAND_LEFT"])
+    right_agent = DobotAgent(which_hand="RIGHT", dobot_config=hands_dict["HAND_RIGHT"])
     agent = BimanualAgent(left_agent, right_agent)
 
     # pose init

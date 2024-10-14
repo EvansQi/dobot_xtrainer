@@ -9,6 +9,7 @@ if __name__ == "__main__":
     ini_file_path = str(Path(__file__).parent) + "/dobot_config/dobot_settings.ini"
     ini_file, hands_dict = load_ini_data_hands()
     port_list = scan_port()
+    print(port_list)
     assert len(port_list) >= 4, f"At least 4 ports should be detected, but only {len(port_list)} found, please check"
 
     # find hand port
@@ -24,7 +25,7 @@ if __name__ == "__main__":
                     port_list.remove(_port)
                     print("Success(hand): ", which_hand, _port)
                     ini_file.set(section=which_hand, option="port", value=_port)
-                    ini_file.set(section=which_hand, option="baud_rate", value=_baud_rate)
+                    ini_file.set(section=which_hand, option="baud_rate", value=str(_baud_rate))
                     with open(ini_file_path, "w+") as _file:
                         ini_file.write(_file)
                     _file.close()
