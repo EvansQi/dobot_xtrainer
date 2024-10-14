@@ -34,6 +34,7 @@ date: 2024/08/13
 v1.0.7
 date: 2024/10/08
 1.Add the firmware version check and the type of robot check
+
 date: 2024/10/10
 2.Supports Nova 5
 3.Supports 1M and 2M baud rate main hand
