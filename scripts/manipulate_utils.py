@@ -5,6 +5,7 @@ from dobot_control.agents.dobot_agent import DobotRobotConfig
 import os
 from pathlib import Path
 from dataclasses import dataclass
+
 from scripts.function_util import wait_period, log_write
 
 
@@ -48,7 +49,8 @@ def load_ini_data_hands():
             joint_signs=[int(i) for i in ini_file.get(_hand, "joint_signs").split(",")],
             gripper_config=[int(i) for i in ini_file.get(_hand, "gripper_config").split(",")],
             start_joints=[float(i) for i in ini_file.get(_hand, "start_joints").split(",")],
-            baud_rate=int(ini_file.get(_hand, "baud_rate")))
+            baud_rate=int(ini_file.get(_hand, "baud_rate")),
+            using_sensor=int(ini_file.get(_hand, "using_sensor")))
     return ini_file, hands_dict
 
 
