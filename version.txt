@@ -38,3 +38,9 @@ date: 2024/10/08
 date: 2024/10/10
 2.Supports Nova 5
 3.Supports 1M and 2M baud rate main hand
+
+date: 2024/12/5
+1. Directory
+2. Protection bug
+3. "6_dataset_count.py": bug
+4. Package version add in "requirement.txt"

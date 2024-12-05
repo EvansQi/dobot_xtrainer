@@ -2,11 +2,11 @@
 import pathlib
 import os
 
-DATA_DIR = './data'
+DATA_DIR = '/home/dobot/projects/datasets/'
 TASK_CONFIGS = {
     # dobot move cube new
         'move_cube_new': {
-        'dataset_dir': DATA_DIR + '/move_cube_new',
+        'dataset_dir': DATA_DIR + '/dataset_package_test/train_data/',
         'episode_len': 900,
         'train_ratio': 0.9,
         'camera_names': ['top', 'left_wrist', 'right_wrist']
