@@ -152,12 +152,11 @@ def claw_width(coef):
     claw_wid = 0.03 * cos_claw_servo + 0.5 * np.sqrt(0.0036 * cos_claw_servo ** 2 + 0.0028)
     return claw_wid
 
-def forward_kinematics(q0, q1, q2, q3, q4, q5, y):
+def forward_kinematics(q0, q1, q2, q3, q4, q5, y, r_type):
     """
     Compute the forward kinematics
     """
-    robot_type = get_robot_type("192.168.5.1")
-    if robot_type == "Nova 2":
+    if r_type == "Nova 2":
         dh_params = [
             (q0, 0.2234, 0, np.pi / 2),
             (q1 - np.pi / 2, 0, -0.280, 0),
@@ -166,7 +165,7 @@ def forward_kinematics(q0, q1, q2, q3, q4, q5, y):
             (q4, 0.120, 0, -np.pi / 2),
             (q5, 0.088, 0, 0)
         ]
-    if robot_type == "Nova 5":
+    if r_type == "Nova 5":
         dh_params = [
             (q0, 0.240, 0, np.pi / 2),
             (q1 - np.pi / 2, 0, -0.400, 0),
@@ -186,7 +185,7 @@ def forward_kinematics(q0, q1, q2, q3, q4, q5, y):
     return pos
 
 
-def calculate_vel_pos(action, last_action, total_time):
+def calculate_vel_pos(action, last_action, total_time, r_type):
     """
     Calculate the velocity for forward kinematics
     """
@@ -202,8 +201,8 @@ def calculate_vel_pos(action, last_action, total_time):
             claw = claw_left if side == 'left' else claw_right
             claw *= coef
 
-            current_fk = forward_kinematics(*action[0:6] if side == 'left' else action[7:13], claw)
-            last_fk = forward_kinematics(*last_action[0:6] if side == 'left' else last_action[7:13], claw)
+            current_fk = forward_kinematics(*action[0:6] if side == 'left' else action[7:13], claw, r_type)
+            last_fk = forward_kinematics(*last_action[0:6] if side == 'left' else last_action[7:13], claw, r_type)
 
             positions[f'{side}_{paw}'] = current_fk
             vel[f'{side}_{paw}'] = (current_fk - last_fk) / total_time
@@ -421,7 +420,7 @@ def main(args):
             if (safe_limit < 1):
                 safe_limit = safe_limit + 1
             else:
-                positions, vel = calculate_vel_pos(action, last_action, total_time)
+                positions, vel = calculate_vel_pos(action, last_action, total_time, robot_type)
                 protect_err[0] = check_pose_protection(positions, vel, what_to_do)
                 protect_err[1] = check_joint_safety(action)
             if any(protect_err):

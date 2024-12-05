@@ -25,7 +25,6 @@ def main(args):
     # print(all_data_dir)
     all_data_dir.sort(key=lambda x: int(x))
     # print(all_data_dir)
-    MIRROR_STATE_MULTIPLY = np.array(args.MIRROR_STATE_MULTIPLY)
     max_step = 0
     for idx in range(len(all_data_dir)):
         one_data_dir = dataset_dir+all_data_dir[idx]+"/"
