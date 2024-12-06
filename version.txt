@@ -44,3 +44,6 @@ date: 2024/12/5
 2. Protection bug
 3. "6_dataset_count.py": bug
 4. Package version add in "requirement.txt"
+
+date: 2024/12/6
+1. change 30004 port timeout to 50ms
