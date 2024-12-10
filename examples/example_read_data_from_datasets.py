@@ -1,17 +1,33 @@
+import h5py
 import numpy as np
 import cv2
-import pickle
 
 
-# image
-image_imcode = np.load("/home/dobot/projects/datasets/dataset1_cleanDish/collect_data/20240511111035/leftImg/1.npy")
-image = cv2.imdecode(np.asarray(image_imcode, dtype="uint8"), cv2.IMREAD_COLOR)
-cv2.imshow("1", image)
-cv2.waitKey(1000)
+show_canvas = np.zeros((480, 640*3, 3), dtype=np.uint8)
+with h5py.File("/home/dobot/projects/datasets/clean_1234/train_data/episode_init_0.hdf5", 'r',
+               rdcc_nbytes=1024 ** 2 * 2) as root:
+    for i in range(len(root["/observations/images/top"])):
+        qpos = root["/observations/qpos"][i]
+        print("step", i)
+        # observation, joints angle, gripper width and images
+        print("observation: left hand [J1, J2, J3, J4, J5, J6, gripper_width]:", [i for i in qpos[:7]])
+        print("observation: right hand [J1, J2, J3, J4, J5, J6, gripper_width]:", [i for i in qpos[7:14]])
+        show_canvas[:, :640] = np.asarray(
+            cv2.imdecode(np.asarray(root["/observations/images/top"][i], dtype="uint8"), cv2.IMREAD_COLOR),
+            dtype="uint8")
+        show_canvas[:, 640:640 * 2] = np.asarray(
+            cv2.imdecode(np.asarray(root["/observations/images/left_wrist"][i], dtype="uint8"), cv2.IMREAD_COLOR),
+            dtype="uint8")
+        show_canvas[:, 640 * 2:640 * 3] = np.asarray(
+            cv2.imdecode(np.asarray(root["/observations/images/right_wrist"][i], dtype="uint8"), cv2.IMREAD_COLOR),
+            dtype="uint8")
+        cv2.imshow("0", show_canvas)
 
-# data
-with open("/home/dobot/projects/datasets/dataset1_cleanDish/collect_data/20240511111035/observation/1.pkl", "rb") as f:
-    data_single = pickle.load(f)
-    print(data_single['joint_positions'])
-    print(data_single['joint_velocities'])
-    print(data_single['control'])
+        # predict joint angle, gripper width
+        action = root["action"][i]
+        print("predict action: left hand [J1, J2, J3, J4, J5, J6, gripper_width]:", [i for i in action[:7]])
+        print("predict action: right hand [J1, J2, J3, J4, J5, J6, gripper_width]:", [i for i in action[7:14]])
+        print()
+
+
+        cv2.waitKey(0)
