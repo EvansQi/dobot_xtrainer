@@ -12,7 +12,6 @@ Values are extracted from the original:
 from config.schema import (
     CameraConfig,
     CollectionConfig,
-    FollowerArmConfig,
     MainHandConfig,
     NetworkConfig,
     SafetyBounds,
@@ -47,28 +46,6 @@ RIGHT_MAIN_HAND = MainHandConfig(
 MAIN_HANDS = {"left": LEFT_MAIN_HAND, "right": RIGHT_MAIN_HAND}
 
 # ---------------------------------------------------------------------------
-# Follower robots (Dobot Nova – controlled via TCP)
-# ---------------------------------------------------------------------------
-
-LEFT_FOLLOWER = FollowerArmConfig(
-    ip="192.168.5.1",
-    robot_number=2,
-    gripper_port="/dev/ttyUSB2",
-    gripper_id=21,
-    gripper_pos_range=(2048, 3052),
-)
-
-RIGHT_FOLLOWER = FollowerArmConfig(
-    ip="192.168.5.2",
-    robot_number=2,
-    gripper_port="/dev/ttyUSB1",
-    gripper_id=22,
-    gripper_pos_range=(2048, 3052),
-)
-
-FOLLOWERS = {"left": LEFT_FOLLOWER, "right": RIGHT_FOLLOWER}
-
-# ---------------------------------------------------------------------------
 # Cameras
 # ---------------------------------------------------------------------------
 
@@ -84,10 +61,7 @@ CAMERAS = {
 
 COLLECTION = CollectionConfig()
 
-# ---------------------------------------------------------------------------
-# Safety
-# ---------------------------------------------------------------------------
-
+# Used internally by safety/workspace_monitor.py
 SAFETY = SafetyBounds()
 
 # ---------------------------------------------------------------------------

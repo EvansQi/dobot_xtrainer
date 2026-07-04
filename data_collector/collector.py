@@ -13,7 +13,6 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-import cv2
 import numpy as np
 
 from scripts.function_util import mk_dir
@@ -74,7 +73,6 @@ class DataCollector:
         save_hz: int = 25,
         camera_fps: int = 30,
         compress: bool = True,
-        jpeg_quality: int = 50,
     ):
         self._save_root = save_root
         self._project_name = project_name
@@ -82,7 +80,6 @@ class DataCollector:
         self._save_hz = save_hz
         self._camera_fps = camera_fps
         self._compress = compress
-        self._jpeg_quality = jpeg_quality
 
         # Per-camera buffers
         self._buffers: Dict[str, CameraBuffer] = {
@@ -101,7 +98,6 @@ class DataCollector:
 
         # Stats
         self._camera_names: List[str] = sorted(cameras.keys())
-        self._dropped_writes: int = 0
         self._duplicate_frame_counts: Dict[str, int] = {}
         self._prev_cam_wall: Dict[str, float] = {}
 
@@ -158,7 +154,6 @@ class DataCollector:
         """Prepare for a new recording session."""
         self._frames.clear()
         self._frame_mono_times.clear()
-        self._dropped_writes = 0
         self._duplicate_frame_counts.clear()
         self._prev_cam_wall.clear()
 
@@ -324,7 +319,6 @@ class DataCollector:
                 "save_hz": self._save_hz,
                 "camera_fps": self._camera_fps,
                 "compress": self._compress,
-                "jpeg_quality": self._jpeg_quality,
                 "camera_names": self._camera_names,
             },
             "collection": {
@@ -345,7 +339,6 @@ class DataCollector:
                 "total_duplicate_frames": int(
                     sum(self._duplicate_frame_counts.values())
                 ),
-                "dropped_writes": self._dropped_writes,
             },
             "output": {
                 "hdf5": f"train_data/episode_0.hdf5",

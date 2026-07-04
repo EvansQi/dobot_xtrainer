@@ -5,8 +5,7 @@ that wire together modular components:
 
     config/runtime.py          → single-point configuration
     teleop/session_controller  → button state machine
-    data_collector/collector   → camera management + saving
-    data_collector/writer      → async image writes
+    data_collector/collector   → camera management + HDF5 saving
     safety/workspace_monitor   → joint + workspace safety
 
 The control link (Dynamixel → agent → ZMQ → Dobot) is unchanged.
@@ -29,10 +28,8 @@ sys.path.append(BASE_DIR)
 from config.runtime import (
     CAMERAS,
     COLLECTION,
-    FOLLOWERS,
     MAIN_HANDS,
     NETWORK,
-    SAFETY,
 )
 from data_collector.collector import DataCollector
 from dobot_control.agents.agent import BimanualAgent
@@ -118,7 +115,6 @@ def main(args: Args):
         save_hz=COLLECTION.save_hz,
         camera_fps=COLLECTION.camera_fps,
         compress=COLLECTION.compress,
-        jpeg_quality=COLLECTION.jpeg_quality,
     )
 
     # ── 7. Wire callbacks ──────────────────────────────────────────
@@ -182,7 +178,12 @@ def main(args: Args):
             if session.state.any_servoing():
                 flag = session.state.get_active_flag()
 
-                # Safety check (skip first frame)
+                # Servo step check (BEFORE env.step, comparing with PREVIOUS frame)
+                action_ok, action = servo_action_check(action, last_action, flag)
+                if not action_ok:
+                    print("[Main] Servo step rejected by safety check")
+
+                # Workspace safety check (skip first frame)
                 if safe_limit < 1:
                     safe_limit += 1
                 else:
@@ -198,22 +199,17 @@ def main(args: Args):
                 obs = env.step(action, flag)
                 obs["joint_positions"][6]  = action[6]
                 obs["joint_positions"][13] = action[13]
-                last_action = action.copy()
 
                 # Save data if recording
                 if session.state.recording:
-                    # Apply servo step check before saving
-                    err, action_checked = servo_action_check(
-                        action, last_action, flag
-                    )
-                    if not err:
-                        print("[Main] Servo step rejected by safety check")
                     collector.tick(
                         frame_idx=session.state.frame_idx,
-                        action=action_checked if err else action,
+                        action=action,
                         obs=obs,
                     )
                     session.state.increment_frame()
+
+                last_action = action.copy()
             else:
                 safe_limit = 0
 

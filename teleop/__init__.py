@@ -4,7 +4,7 @@ Replaces the undocumented what_to_do[2×3] numpy array in run_control.py
 with explicit, typed button events and session commands.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Callable, Optional
 
@@ -36,10 +36,8 @@ class ArmState(Enum):
 class SessionPhase(Enum):
     """Global session phase."""
     IDLE      = auto()   # nothing active
-    APPROACH  = auto()   # dynamic-approach in progress
     SERVOING  = auto()   # at least one arm is servoing
     RECORDING = auto()   # data being collected
-    STOPPING  = auto()   # recording stopped, cleanup
 
 
 # ---------------------------------------------------------------------------
@@ -49,8 +47,6 @@ class SessionPhase(Enum):
 @dataclass
 class ArmSessionState:
     state: ArmState = ArmState.LOCKED
-    short_press_count: int = 0
-    long_press_count: int = 0
 
     @property
     def locked(self) -> bool:
@@ -90,11 +86,10 @@ class SessionState:
         self._session_ts: Optional[str] = None
         self._frame_idx: int = 0
 
-        # Callbacks – set by main() to decouple session logic from I/O
-        self.on_lock_changed: Optional[Callable] = None     # (side, locked)
-        self.on_servo_changed: Optional[Callable] = None    # (side, servoing)
-        self.on_recording_changed: Optional[Callable] = None # (recording)
-        self.on_phase_changed: Optional[Callable] = None     # (phase)
+        # Callbacks – set by SessionController to decouple session logic from I/O
+        self.on_lock_changed: Optional[Callable] = None
+        self.on_servo_changed: Optional[Callable] = None
+        self.on_recording_changed: Optional[Callable] = None
 
     # ── properties (thread-safe reads) ──────────────────────────
 
@@ -151,17 +146,22 @@ class SessionState:
             self._toggle_recording()
 
     def _toggle_lock(self, side: str):
+        was_servoing = False
         with self._lock:
             arm = self._arms[side]
             if arm.locked:
                 arm.state = ArmState.UNLOCKED
                 locked = False
             else:
-                # Unlocking while servoing → stop servo first
-                if arm.servoing:
+                # Locking while servoing → stop servo first + fire callback
+                was_servoing = arm.servoing
+                if was_servoing:
                     self._stop_servo_locked(side)
                 arm.state = ArmState.LOCKED
                 locked = True
+
+        if was_servoing and self.on_servo_changed:
+            self.on_servo_changed(side, False)
 
         if self.on_lock_changed:
             self.on_lock_changed(side, locked)

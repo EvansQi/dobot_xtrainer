@@ -4,7 +4,6 @@ Replaces the inline check_pose_protection() + check_joint_safety() in
 run_control.py (lines 219-283) with a standalone, testable class.
 """
 
-import time
 from dataclasses import dataclass, field
 from typing import List, Optional, Tuple
 
@@ -37,7 +36,6 @@ class WorkspaceMonitor:
         self._bounds = SAFETY
         self._robot_type = robot_type
         self._last_action: Optional[np.ndarray] = None
-        self._warning_cooldown: float = 0.5
 
         # DH parameters (moved from run_control.py)
         if robot_type == "Nova 2":
