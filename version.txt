@@ -50,3 +50,6 @@ date: 2024/12/6
 
 date: 2024/12/10
 1. revise script "examples/example_rad_data_from_datasets.py"
+
+date: 2024/12/11
+1. frames>3500, "4_collect2train_data.py" bug

@@ -39,7 +39,7 @@ class ZMQServerRobot:
 
     def serve(self) -> None:
         """Serve the leader robot state over ZMQ."""
-        self._socket.setsockopt(zmq.RCVTIMEO, 1)  # Set timeout to 1000 ms
+        self._socket.setsockopt(zmq.RCVTIMEO, 1000)  # Set timeout to 1000 ms
         print("*"*100)
         while not self._stop_event.is_set():
             try:

@@ -68,7 +68,7 @@ class DobotRobot(Robot):
 
     def get_robot_err(self):
         while not self._stop_thread.is_set():
-            time.sleep(0.001)
+            time.sleep(0.05)  # 50 ms → 20 Hz, sufficient for error monitoring
             with self._lock:
                 if self.robot_status.get_error():
                     self.robot_is_err = True

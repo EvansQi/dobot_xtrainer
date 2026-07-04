@@ -56,26 +56,24 @@ def mk_dir(path_dir):
 
 # log maker
 def log_write(file_name, data):
-    log_path = os.path.dirname(__file__)+"/logs/"
+    log_path = os.path.dirname(__file__) + "/logs/"
     mk_dir(log_path)
     current_time = time.strftime("%Y-%m-%d %H-%M-%S:", time.localtime())
-    with open(log_path+"log.txt", 'a') as f:
-        f.writelines(str(current_time)+str(datetime.datetime.now().strftime("%f")[:-3])
+    with open(log_path + "log.txt", 'a') as f:
+        f.writelines(str(current_time) + str(datetime.datetime.now().strftime("%f")[:-3])
                      + " [" + file_name.split("/")[-1] + "] "
                      + str(data))
         f.writelines("\n")
-    f.close()
 
 
 def mismatch_data_write(ppp, data):
-    str_path = str(ppp)+"/pose.txt"
+    str_path = str(ppp) + "/pose.txt"
     if not os.path.exists(str_path):
         with open(str_path, 'w') as f:
             print("ok")
     with open(str_path, 'a') as f:
-        f.writelines(str(data[6])+str(data[13]))
+        f.writelines(str(data[6]) + str(data[13]))
         f.writelines("\n")
-    f.close()
 
 
 def time_stamp():
@@ -86,17 +84,15 @@ def time_stamp():
 
 
 def gripper_cacheData_writein(writePath, data):
-    with open(writePath,  'w') as f:
-        f.writelines(str(time_stamp())+" " + str(data))
+    with open(writePath, 'w') as f:
+        f.writelines(str(time_stamp()) + " " + str(data))
         f.writelines("\n")
-    f.close()
 
 
 def gripper_cacheData_readPosition(writePath, data, last_read_time):
-    with open(writePath,  'w') as f:
+    with open(writePath, 'w') as f:
         f.writelines(str(data))
         f.writelines("\n")
-    f.close()
 
 
 def wait_period(delay_time, start_t) -> None:
@@ -113,45 +109,36 @@ def wait_period(delay_time, start_t) -> None:
 
 def save_videos(video, dt, video_path=None):
     if isinstance(video, list):
-        print("you")
         cam_names = list(video[0].keys())
         cam_names = sorted(cam_names)
         h, w, _ = video[0][cam_names[0]].shape
         w = w * len(cam_names)
-        fps = int(1/dt)
+        fps = int(1 / dt)
         out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
         for ts, image_dict in enumerate(video):
             images = []
             for cam_name in cam_names:
                 image = image_dict[cam_name]
-                image = image[:, :, [0, 1, 2]] # swap B and R channel
-                # image = image[:, :, [2, 1, 0]] # swap B and R channel
                 images.append(image)
             images = np.concatenate(images, axis=1)
             out.write(images)
         out.release()
         print(f'Saved video to: {video_path}')
     elif isinstance(video, dict):
-        print("me")
         cam_names = list(video.keys())
         cam_names = sorted(cam_names)
         print(cam_names)
         all_cam_videos = []
         for cam_name in cam_names:
-            all_cam_videos.append(video[cam_name])
-        all_cam_videos = np.concatenate(all_cam_videos, axis=2) # width dimension
-
+            all_cam_videos.append(np.asarray(video[cam_name]))
+        all_cam_videos = np.concatenate(all_cam_videos, axis=2)  # width dimension
         n_frames, h, w, _ = all_cam_videos.shape
         fps = int(1 / dt)
         out = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
         for t in range(n_frames):
-            image = all_cam_videos[t]
-            image = image[:, :, [0, 1, 2]]  # swap B and R channel
-            out.write(image)
+            out.write(all_cam_videos[t])
         out.release()
         print(f'Saved video to: {video_path}')
 
 if __name__ == "__main__":
-    # left_usb = "/sys/bus/usb-serial/devices"
-    # free_limit_and_set_one("/sys/bus/usb-serial/devices/ttyUSB2/latency_timer")
     scan_port()

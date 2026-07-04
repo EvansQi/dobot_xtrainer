@@ -62,9 +62,13 @@ class BimanualAgent(Agent):
             self.agent_right.set_torque(_flag)
 
     def get_keys(self):
-        while 1:
+        """Read keys from both hands with a timeout to avoid spinning forever
+        when one hand is disconnected."""
+        deadline = time.time() + 0.5  # 500 ms timeout
+        while time.time() < deadline:
             left_keys = self.agent_left.get_keys()
             right_keys = self.agent_right.get_keys()
             if len(left_keys) and len(right_keys):
-                break
-        return np.array([left_keys, right_keys])
+                return np.array([left_keys, right_keys])
+            time.sleep(0.001)
+        return np.array([[], []])

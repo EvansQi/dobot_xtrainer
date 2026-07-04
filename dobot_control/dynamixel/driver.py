@@ -245,9 +245,11 @@ class DynamixelDriver(DynamixelDriverProtocol):
         self._reading_thread.start()
 
     def _read_joint_angles(self):
-        # Continuously read joint angles and update the joint_angles array
+        # Continuously read joint angles and update the joint_angles array.
+        # 5 ms sleep → ~200 Hz poll rate, which is sufficient for servo
+        # control while avoiding serial-port contention with key reads.
         while not self._stop_thread.is_set():
-            time.sleep(0.001)
+            time.sleep(0.005)
             with self._lock:
                 _joint_angles = np.zeros(len(self._ids), dtype=int)
                 # print("aaaa: ", self._ids)
