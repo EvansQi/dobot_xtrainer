@@ -15,7 +15,11 @@ from typing import Dict, List, Optional, Tuple
 
 @dataclass
 class MainHandConfig:
-    """Dynamixel main-hand (leader) configuration for one arm."""
+    """Dynamixel main-hand (leader) configuration for one arm.
+
+    Can be converted to DobotRobotConfig via :meth:`to_dobot_config`
+    (eliminates the need to parse dobot_settings.ini at runtime).
+    """
     joint_ids: List[int] = field(default_factory=list)
     append_id: int = 0
     joint_offsets: List[float] = field(default_factory=list)
@@ -25,6 +29,21 @@ class MainHandConfig:
     port: str = "/dev/ttyUSB0"
     baud_rate: int = 1_000_000
     using_sensor: bool = False
+
+    def to_dobot_config(self):
+        """Convert to DobotRobotConfig (used by DobotAgent)."""
+        from dobot_control.agents.dobot_agent import DobotRobotConfig
+        return DobotRobotConfig(
+            joint_ids=list(self.joint_ids),
+            append_id=self.append_id,
+            baud_rate=self.baud_rate,
+            port=self.port,
+            joint_offsets=list(self.joint_offsets),
+            joint_signs=list(self.joint_signs),
+            gripper_config=list(self.gripper_config),
+            start_joints=list(self.start_joints),
+            using_sensor=int(self.using_sensor),
+        )
 
 
 @dataclass

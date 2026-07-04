@@ -43,8 +43,8 @@ from dobot_control.robots.robot_node import ZMQClientRobot
 from safety.workspace_monitor import WorkspaceMonitor
 from scripts.manipulate_utils import (
     dynamic_approach,
-    load_ini_data_hands,
     robot_pose_init,
+    servo_action_check,
     set_light,
 )
 from teleop.session_controller import SessionController
@@ -86,10 +86,11 @@ def main(args: Args):
     # ── 1. Cameras ─────────────────────────────────────────────────
     cameras = init_cameras()
 
-    # ── 2. Agents (Dynamixel main hands) ───────────────────────────
-    _, hands_dict = load_ini_data_hands()
-    left_agent  = DobotAgent(which_hand="LEFT",  dobot_config=hands_dict["HAND_LEFT"])
-    right_agent = DobotAgent(which_hand="RIGHT", dobot_config=hands_dict["HAND_RIGHT"])
+    # ── 2. Agents (Dynamixel main hands – config-driven, no INI) ───
+    left_agent  = DobotAgent(which_hand="LEFT",
+                             dobot_config=MAIN_HANDS["left"].to_dobot_config())
+    right_agent = DobotAgent(which_hand="RIGHT",
+                             dobot_config=MAIN_HANDS["right"].to_dobot_config())
     agent = BimanualAgent(left_agent, right_agent)
 
     # ── 3. Follower robot (ZMQ → Dobot) ────────────────────────────
@@ -138,13 +139,13 @@ def main(args: Args):
         nonlocal curr_light
         ts = session.state.session_ts
         print(f"[Main] Recording started – session {ts}")
-        collector.setup_session_dirs(ts)
+        collector.begin_session(ts)
         curr_light = set_light(env, "green", 1)
 
     def on_record_stop():
         nonlocal curr_light
-        print("[Main] Recording stopped.")
-        collector.teardown_session()
+        print("[Main] Recording stopped – finalizing HDF5 + meta...")
+        collector.finalize_session()
         curr_light = set_light(env, "yellow", 1)
 
     session.on_servo_start  = on_servo_start
@@ -201,10 +202,15 @@ def main(args: Args):
 
                 # Save data if recording
                 if session.state.recording:
+                    # Apply servo step check before saving
+                    err, action_checked = servo_action_check(
+                        action, last_action, flag
+                    )
+                    if not err:
+                        print("[Main] Servo step rejected by safety check")
                     collector.tick(
-                        session_ts=session.state.session_ts,
                         frame_idx=session.state.frame_idx,
-                        action=action,
+                        action=action_checked if err else action,
                         obs=obs,
                     )
                     session.state.increment_frame()
@@ -233,8 +239,10 @@ def main(args: Args):
     finally:
         shutdown.set()
         session.stop()
+        # Finalize if we were in the middle of recording
+        if session.state.recording:
+            collector.finalize_session()
         collector.stop_camera_threads()
-        collector.teardown_session()
         print("[Main] Shutdown complete.")
 
 
